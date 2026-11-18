@@ -94,13 +94,13 @@ Handoffs are kept out of git through `.git/info/exclude`, so your `.gitignore` i
 
 You need Claude Code 2.1.251 or later (for the model-switch hooks) and `python3` on PATH.
 
-1. From a local copy:
+1. Add the marketplace:
 
 ```bash
-claude plugin marketplace add /path/to/claude-model-routing
+claude plugin marketplace add Starteli/claude-model-routing
 ```
 
-2. Then:
+2. Install the plugin:
 
 ```bash
 claude plugin install model-routing@claude-routing
@@ -108,7 +108,13 @@ claude plugin install model-routing@claude-routing
 
 3. In Claude Code, run `/model-routing:setup` once, or `/model-routing:setup same` to keep your own model for executing.
 
-From GitHub, once it's pushed, step 1 becomes `claude plugin marketplace add <owner>/claude-model-routing`.
+To get updates later (then restart Claude Code):
+
+```bash
+claude plugin update model-routing@claude-routing
+```
+
+To install from a local folder instead, give step 1 the folder's real path, for example `claude plugin marketplace add ~/Downloads/claude-model-routing`.
 
 It adds roughly 800 tokens per session: about 570 for the skill and agent descriptions, plus about 200 for the routing note.
 
