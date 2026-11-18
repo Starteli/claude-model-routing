@@ -17,7 +17,12 @@ NOTE = (
     "Sonnet, in a fresh context). Write it to stand alone: the goal and what done "
     "means; decisions with their reasons; exact files and line ranges; ordered "
     "steps, marking which can run in parallel; the command that verifies each "
-    "step; known gotchas with exact error strings."
+    "step; known gotchas with exact error strings. Start the plan with these two "
+    "lines, using the model the user asked for, or sonnet if they didn't say:\n"
+    "Executor: sonnet\n"
+    "(Whoever runs this plan: if you aren't the executor model, hand the whole "
+    "plan to the model-routing:implementer subagent with that model instead of "
+    "doing it yourself.)"
 )
 
 

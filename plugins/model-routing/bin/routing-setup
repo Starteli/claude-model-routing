@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-"""routing-setup [--check]
+"""routing-setup [--check | --apply] [--executor sonnet|same]
 
-Turns on Claude Code's built-in plan -> execute split in your user settings:
+Turns on Claude Code's built-in "run the approved plan in a fresh session":
+  "showClearContextOnPlanAccept": true   plan approval offers "Yes, clear context"
+
+--executor sonnet (default) also sets
   "model": "opusplan"                    Opus while planning, Sonnet while executing
-  "showClearContextOnPlanAccept": true   plan approval offers "Yes, clear context",
-                                         which runs the plan in a fresh session
+--executor same leaves your model alone, so plans run on whatever model you're
+  using, and removes "opusplan" if an earlier run set it.
 
-Backs up settings.json first. --check only reports what would change.
+Backs up settings.json before writing. --check only reports what would change.
 """
+import argparse
 import json
 import os
 import shutil
@@ -15,11 +19,14 @@ import sys
 import time
 from pathlib import Path
 
-WANT = {"model": "opusplan", "showClearContextOnPlanAccept": True}
 
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--check", action="store_true")
+    ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--executor", choices=["sonnet", "same"], default="sonnet")
+    args = ap.parse_args()
 
-def main(argv):
-    check = "--check" in argv
     config_dir = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
     path = config_dir / "settings.json"
     try:
@@ -31,26 +38,35 @@ def main(argv):
         print(f"{path} doesn't contain a JSON object; nothing changed.", file=sys.stderr)
         return 1
 
-    changes = [(k, settings.get(k), v) for k, v in WANT.items() if settings.get(k) != v]
+    new = dict(settings)
+    new["showClearContextOnPlanAccept"] = True
+    if args.executor == "sonnet":
+        new["model"] = "opusplan"
+    elif new.get("model") == "opusplan":
+        del new["model"]
+
+    changes = [(k, settings.get(k), new.get(k))
+               for k in ("model", "showClearContextOnPlanAccept")
+               if settings.get(k) != new.get(k)]
     if not changes:
         print(f"Already set in {path}. Nothing to change.")
         return 0
-    for key, old, new in changes:
-        print(f"{key}: {json.dumps(old)} -> {json.dumps(new)}")
-    if check:
-        print("(--check: nothing written)")
+    for key, old, val in changes:
+        shown = "(removed, back to Claude Code's default)" if val is None else json.dumps(val)
+        print(f"{key}: {json.dumps(old)} -> {shown}")
+    if not args.apply:
+        print("(check only: nothing written)")
         return 0
 
     if path.exists():
         backup = path.with_name(f"settings.json.bak-{time.strftime('%Y%m%d-%H%M%S')}")
         shutil.copy2(path, backup)
         print(f"Backup: {backup}")
-    settings.update(WANT)
     config_dir.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(settings, indent=2) + "\n")
-    print(f"Updated {path}. Takes effect in new sessions; in this one, run /model opusplan.")
+    path.write_text(json.dumps(new, indent=2) + "\n")
+    print(f"Updated {path}. Takes effect in new sessions.")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main())

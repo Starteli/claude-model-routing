@@ -21,23 +21,33 @@ On a subscription the dollar figures are only estimates. Your plan meters usage 
 
 ## Plan on Opus, execute on Sonnet in a fresh chat
 
-Claude Code has this built in, but it's off by default. Run `/model-routing:setup` once. It sets two things in `~/.claude/settings.json` and backs the file up first:
+Claude Code has this built in, but it's off by default. Run the setup once. It backs up `~/.claude/settings.json` first:
 
-- `"model": "opusplan"`: Opus while planning, Sonnet while executing.
-- `"showClearContextOnPlanAccept": true`: plan approval offers **"Yes, clear context"**, which starts a fresh session that carries out just the approved plan.
+| Command | Effect |
+|---|---|
+| `/model-routing:setup` | `"model": "opusplan"` (Opus plans, Sonnet executes) plus `"showClearContextOnPlanAccept": true` |
+| `/model-routing:setup same` | Only `"showClearContextOnPlanAccept": true`. Plans run on whatever model you're using |
+
+`showClearContextOnPlanAccept` makes plan approval offer **"Yes, clear context"**, which starts a fresh session that carries out just the approved plan.
 
 Then, for a bigger task:
 
-1. Press Shift+Tab to enter plan mode. Opus writes the plan.
-2. Pick **"Yes, clear context"** when you approve it. Sonnet carries out the plan in a fresh session and never re-reads the planning chat.
+1. Press Shift+Tab to enter plan mode.
+2. The plan starts with `Executor: sonnet`. To run this plan on another model, press Ctrl+G and change that line before approving. You can also just say "run this one on Opus" while planning.
+3. Pick **"Yes, clear context"**. The plan runs in a fresh session. If the executor isn't the session's model, the whole plan goes to a fresh subagent on the executor model. Either way, nothing re-reads the planning chat.
 
-The plugin makes that hold up:
+To change your mind midway, run `/execute opus` (or sonnet or haiku). The rest of the work goes to a fresh subagent on that model, which reads a brief of what's done and what's left instead of the whole session. Switching with `/model` this late would make the new model re-read everything.
+
+The plugin also makes this hold up:
 
 - **While you plan,** Claude is told the plan may be all the executing model sees. So the plan spells out decisions and why, files and lines, steps, and how to verify each one.
-- **If you approve without clearing,** Claude is told how to execute cheaply. On Opus or Fable it hands the work to Sonnet subagents. On Sonnet it does the work itself and gives purely mechanical chunks to Haiku.
+- **If you approve without clearing,** Claude follows the `Executor` line: it does the work itself if it is that model, and hands it to subagents on that model if not.
 - **If entering plan mode re-sends a big conversation to Opus,** you're told what it cost, and that running `/compact` first keeps it small. Claude Code makes this switch itself, so it can't be stopped beforehand.
 
-Outside plan mode, `/execute` does the same hand-off for a plan you agreed on in chat.
+What a model choice costs:
+
+- **Opus doing the work** costs about twice what Sonnet does per token. You pay that whenever you choose Opus.
+- **The switch itself** is close to free while the chat is small: at the start, right after "Yes, clear context", right after `/compact`, and for every subagent. Later in a session, the new model re-reads everything, unless you hand off with `/execute <model>`.
 
 ## When it matters
 
@@ -59,7 +69,7 @@ For most work you don't switch at all. Claude sends pieces of work to other mode
 | Agent | Model | Use |
 |---|---|---|
 | `model-routing:deep-thinker` | Opus | Hard design or debugging question when you're on a smaller model. Ask for it with `/escalate <question>` |
-| `model-routing:implementer` | Sonnet | A settled plan to carry out, chunk by chunk |
+| `model-routing:implementer` | Sonnet, or whichever model you pick | A settled plan, or the rest of one, carried out chunk by chunk. Run with `/execute [model]` |
 | `model-routing:recall` | Haiku | Pull a specific detail out of old handoffs and transcripts, returning only excerpts instead of re-reading them |
 
 Each subagent starts with an empty context, so it never re-reads your conversation, and your main cache stays warm.
@@ -96,7 +106,7 @@ claude plugin marketplace add /path/to/claude-model-routing
 claude plugin install model-routing@claude-routing
 ```
 
-3. In Claude Code, run `/model-routing:setup` once.
+3. In Claude Code, run `/model-routing:setup` once, or `/model-routing:setup same` to keep your own model for executing.
 
 From GitHub, once it's pushed, step 1 becomes `claude plugin marketplace add <owner>/claude-model-routing`.
 

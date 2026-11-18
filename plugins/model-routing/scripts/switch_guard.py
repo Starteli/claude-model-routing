@@ -107,7 +107,8 @@ def main():
     else:
         steps = ["/compact", f"/model {target}"]
         note = ""
-    escalate = " Or stay on this model and use /escalate for the hard part."
+    escalate = (f" Or stay on this model and run /execute {target} to hand the remaining "
+                f"work to a fresh {target} subagent.")
     head = f"This re-sends ~{ctx // 1000}K tokens to {to_model} with no cache{cost}."
 
     if source == "sdk":

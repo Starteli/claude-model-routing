@@ -14,13 +14,13 @@ import os
 import sys
 
 NOTE = (
-    "The plan is approved. If you're running on Opus or Fable, don't carry it out "
-    "in this conversation: follow /execute and hand the chunks to "
-    "model-routing:implementer subagents (Sonnet), each with a brief that stands "
-    "alone, then check the results here. If you're running on Sonnet or Haiku, "
-    "carry it out directly, and hand only large, purely mechanical chunks to "
-    "model-routing:implementer with model: haiku. Either way, make small fixes "
-    "(a few lines) directly."
+    "The plan is approved. Check its Executor line (Sonnet if there is none). If "
+    "you are that model, carry the plan out directly, handing only large, purely "
+    "mechanical chunks to model-routing:implementer with model: haiku. If you "
+    "aren't, follow /execute: hand the chunks to model-routing:implementer "
+    "subagents running the executor model, each with a brief that stands alone, "
+    "then check the results here. Either way, make small fixes (a few lines) "
+    "directly."
 )
 
 

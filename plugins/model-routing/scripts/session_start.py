@@ -23,18 +23,19 @@ import time
 from pathlib import Path
 
 POLICY = (
-    "Model routing: keep this conversation on its current model, because every "
-    "/model switch re-sends the whole history uncached. Route work instead. "
-    "Codebase search goes to Explore. Details from earlier sessions go to "
-    "model-routing:recall. A settled, multi-file implementation goes to "
-    "model-routing:implementer (Sonnet). If this session runs a smaller model and "
-    "hits a hard design or debugging question, use model-routing:deep-thinker "
-    "(Opus). Subagents start with an empty context, so brief "
-    "them with the goal, file paths and decisions, never the history. If the "
-    "user wants a different main model, tell them to run /compact first and "
-    "then /model <name>. For a bigger build, suggest plan mode: the plan gets "
-    "written there, and on approval \"Yes, clear context\" runs it in a fresh "
-    "session (on Sonnet with opusplan)."
+    "Model routing: a /model switch makes the new model re-read this whole "
+    "conversation uncached, so route work to other models through subagents "
+    "instead. Codebase search goes to Explore. Details from earlier sessions go "
+    "to model-routing:recall. A settled implementation goes to "
+    "model-routing:implementer, on the model the user picks (Sonnet by default). "
+    "A hard design or debugging question on a smaller model goes to "
+    "model-routing:deep-thinker (Opus). Subagents start empty, so brief them with "
+    "the goal, file paths and decisions, never the history. If an approved plan "
+    "names an Executor model that isn't you, hand the plan to "
+    "model-routing:implementer with that model. If the user wants a different "
+    "model to take over a task midway, use /execute <model> rather than /model. "
+    "If they want a different model for the whole conversation, tell them to run "
+    "/compact first, then /model <name>. For a bigger build, suggest plan mode."
 )
 
 
