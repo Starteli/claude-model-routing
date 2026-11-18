@@ -4,8 +4,8 @@
   - startup/clear/compact: adds a short routing note so Claude delegates to
     other models through subagents instead of suggesting /model. (Compaction
     drops earlier context, so the note is added again.)
-  - clear: if a handoff was written in the last hour, loads it in full. This is
-    the second half of the /handoff -> /clear -> /model flow.
+  - clear: if a handoff was written in the last 10 minutes, loads it in full.
+    This is the second half of the /handoff -> /clear flow.
   - startup/clear with an older handoff (< 24h): adds a one-line pointer only.
   - resume: if the cache has expired on a big conversation, says that switching
     models right now costs nothing extra.
@@ -13,7 +13,7 @@
 Config (settings.json "env"):
   ROUTING_POLICY            0 = don't add the routing note (default 1)
   ROUTING_HANDOFF_DIR       default .handoff
-  ROUTING_HANDOFF_LOAD_MIN  load the full handoff after /clear if younger than this (default 60)
+  ROUTING_HANDOFF_LOAD_MIN  load the full handoff after /clear if younger than this (default 10)
   ROUTING_ASK_TOKENS        resume tip threshold (default 40000)
 """
 import json
@@ -32,7 +32,9 @@ POLICY = (
     "(Opus). Subagents start with an empty context, so brief "
     "them with the goal, file paths and decisions, never the history. If the "
     "user wants a different main model, tell them to run /compact first and "
-    "then /model <name>."
+    "then /model <name>. For a bigger build, suggest plan mode: the plan gets "
+    "written there, and on approval \"Yes, clear context\" runs it in a fresh "
+    "session (on Sonnet with opusplan)."
 )
 
 
@@ -81,7 +83,10 @@ def main():
 
     if source in ("startup", "clear") and latest.is_file():
         age = (time.time() - latest.stat().st_mtime) / 60
-        load_min = env_float("ROUTING_HANDOFF_LOAD_MIN", 60)
+        # Short window: /handoff -> /clear happens within minutes. A longer one
+        # would leak an old handoff into unrelated fresh sessions, such as the
+        # one that "Yes, clear context" starts for an approved plan.
+        load_min = env_float("ROUTING_HANDOFF_LOAD_MIN", 10)
         text = latest.read_text(encoding="utf-8", errors="replace")
         if source == "clear" and age <= load_min:
             context.append(
