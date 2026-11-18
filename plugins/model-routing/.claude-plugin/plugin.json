@@ -1,0 +1,5 @@
+{
+  "name": "model-routing",
+  "version": "0.1.0",
+  "description": "Cheaper model switching in Claude Code: handoffs instead of full re-reads, a guard on expensive /model switches, and subagents that run other models without touching your session's cache."
+}

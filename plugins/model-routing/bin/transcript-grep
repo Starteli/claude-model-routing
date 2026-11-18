@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+"""transcript-grep PATTERN [options]
+
+Search past Claude Code transcripts for a regex and print short excerpts
+instead of raw JSONL, so a cheap model can find a detail without loading
+whole conversations.
+
+  --project DIR    project whose transcripts to search (default: current dir)
+  --file PATH      search one transcript file instead
+  --all            search every project's transcripts
+  --tools          also search tool calls and tool output (errors, command output)
+  --context N      characters of context around each match (default 300)
+  --limit N        max excerpts (default 15)
+  --sessions N     only the N most recent sessions (default 20)
+"""
+import argparse
+import json
+import os
+import re
+import sys
+from pathlib import Path
+
+
+def projects_root():
+    return Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude") / "projects"
+
+
+def texts(entry, include_tools):
+    """Yield (role, text) pairs from one transcript line."""
+    kind = entry.get("type")
+    if kind not in ("user", "assistant"):
+        return
+    msg = entry.get("message") or {}
+    content = msg.get("content")
+    if isinstance(content, str):
+        yield kind, content
+        return
+    if not isinstance(content, list):
+        return
+    for block in content:
+        if not isinstance(block, dict):
+            continue
+        btype = block.get("type")
+        if btype == "text":
+            yield kind, block.get("text") or ""
+        elif include_tools and btype == "tool_use":
+            yield "tool_call", f"{block.get('name')}: {json.dumps(block.get('input'))[:4000]}"
+        elif include_tools and btype == "tool_result":
+            inner = block.get("content")
+            if isinstance(inner, list):
+                inner = "\n".join(b.get("text", "") for b in inner if isinstance(b, dict))
+            yield "tool_result", str(inner or "")
+
+
+def main():
+    ap = argparse.ArgumentParser(add_help=True)
+    ap.add_argument("pattern")
+    ap.add_argument("--project")
+    ap.add_argument("--file")
+    ap.add_argument("--all", action="store_true")
+    ap.add_argument("--tools", action="store_true")
+    ap.add_argument("--context", type=int, default=300)
+    ap.add_argument("--limit", type=int, default=15)
+    ap.add_argument("--sessions", type=int, default=20)
+    args = ap.parse_args()
+
+    try:
+        rx = re.compile(args.pattern, re.IGNORECASE)
+    except re.error as exc:
+        print(f"bad regex: {exc}", file=sys.stderr)
+        return 2
+
+    root = projects_root()
+    if args.file:
+        files = [Path(args.file)]
+    elif args.all:
+        files = list(root.glob("*/*.jsonl"))
+    else:
+        project = Path(args.project or os.getcwd()).expanduser().resolve()
+        folder = root / re.sub(r"[^a-zA-Z0-9]", "-", str(project))
+        files = list(folder.glob("*.jsonl"))
+        if not files:
+            print(f"No transcripts in {folder}. Try --all.", file=sys.stderr)
+            return 1
+    files = sorted(files, key=lambda p: p.stat().st_mtime, reverse=True)[: args.sessions]
+
+    shown = 0
+    for path in files:
+        try:
+            lines = path.open(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        with lines:
+            for raw in lines:
+                if not rx.search(raw):
+                    continue
+                try:
+                    entry = json.loads(raw)
+                except ValueError:
+                    continue
+                if entry.get("isSidechain"):
+                    continue
+                for role, text in texts(entry, args.tools):
+                    m = rx.search(text)
+                    if not m:
+                        continue
+                    a = max(0, m.start() - args.context)
+                    b = min(len(text), m.end() + args.context)
+                    snippet = text[a:b].replace("\n", " ").strip()
+                    stamp = (entry.get("timestamp") or "")[:16].replace("T", " ")
+                    print(f"[{path.stem[:8]} {stamp} {role}] "
+                          f"{'…' if a else ''}{snippet}{'…' if b < len(text) else ''}")
+                    shown += 1
+                    if shown >= args.limit:
+                        return 0
+    if not shown:
+        print("No matches.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

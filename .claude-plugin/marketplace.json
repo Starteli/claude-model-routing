@@ -1,0 +1,13 @@
+{
+  "name": "claude-routing",
+  "owner": {
+    "name": "claude-routing"
+  },
+  "plugins": [
+    {
+      "name": "model-routing",
+      "source": "./plugins/model-routing",
+      "description": "Cheaper model switching in Claude Code: handoffs instead of full re-reads, a guard on expensive /model switches, and subagents that run other models without touching your session's cache."
+    }
+  ]
+}

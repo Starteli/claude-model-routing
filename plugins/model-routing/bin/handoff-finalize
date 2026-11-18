@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+"""handoff-finalize <project_dir> [session_id]
+
+Run by the /handoff skill after Claude writes <project>/.handoff/LATEST.md:
+  - stamps the source transcript path so the recall agent can dig into it later
+  - archives a timestamped copy in .handoff/archive/
+  - keeps .handoff/ out of git through .git/info/exclude (never touches .gitignore)
+  - prints the handoff size and the next steps
+"""
+import os
+import re
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+STAMP = "<!-- handoff-source:"
+
+
+def transcript_path(project_dir, session_id):
+    if not session_id:
+        return None
+    base = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude") / "projects"
+    guess = base / re.sub(r"[^a-zA-Z0-9]", "-", str(project_dir)) / f"{session_id}.jsonl"
+    if guess.is_file():
+        return guess
+    hits = list(base.glob(f"*/{session_id}.jsonl"))
+    return hits[0] if hits else None
+
+
+def exclude_from_git(project_dir, handoff_dir):
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "--git-path", "info/exclude"],
+            cwd=project_dir, capture_output=True, text=True, timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    if out.returncode != 0:
+        return False
+    exclude = Path(out.stdout.strip())
+    if not exclude.is_absolute():
+        exclude = Path(project_dir) / exclude
+    entry = f"/{handoff_dir.strip('/')}/"
+    try:
+        existing = exclude.read_text() if exclude.exists() else ""
+        if entry not in existing.split("\n"):
+            exclude.parent.mkdir(parents=True, exist_ok=True)
+            with exclude.open("a") as fh:
+                if existing and not existing.endswith("\n"):
+                    fh.write("\n")
+                fh.write(entry + "\n")
+        return True
+    except OSError:
+        return False
+
+
+def main(argv):
+    if len(argv) < 2:
+        print("usage: handoff-finalize <project_dir> [session_id]", file=sys.stderr)
+        return 1
+    project_dir = Path(argv[1]).expanduser().resolve()
+    session_id = argv[2] if len(argv) > 2 else ""
+    handoff_dir = os.environ.get("ROUTING_HANDOFF_DIR", ".handoff")
+    root = project_dir / handoff_dir
+    latest = root / "LATEST.md"
+    if not latest.is_file():
+        print(f"No handoff at {latest}. Write it first.", file=sys.stderr)
+        return 1
+
+    text = latest.read_text(encoding="utf-8")
+    text = "\n".join(l for l in text.rstrip().splitlines() if not l.startswith(STAMP))
+    tp = transcript_path(project_dir, session_id)
+    when = time.strftime("%Y-%m-%d %H:%M")
+    stamp = f"{STAMP} written {when}" + (f"; transcript {tp}" if tp else "") + " -->"
+    text = f"{text}\n\n{stamp}\n"
+    latest.write_text(text, encoding="utf-8")
+
+    archive = root / "archive"
+    archive.mkdir(parents=True, exist_ok=True)
+    archived = archive / f"{time.strftime('%Y%m%d-%H%M%S')}.md"
+    archived.write_text(text, encoding="utf-8")
+
+    in_git = exclude_from_git(project_dir, handoff_dir)
+
+    print(f"Handoff: {latest} (~{len(text) // 4:,} tokens)")
+    print(f"Archived: {archived}")
+    if tp:
+        print(f"Source transcript: {tp}")
+    if in_git:
+        print(f"{handoff_dir}/ is excluded from git via .git/info/exclude")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
