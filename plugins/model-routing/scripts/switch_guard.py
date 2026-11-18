@@ -5,7 +5,7 @@ A /model switch throws away the current model's prompt cache, so the new model
 re-reads the whole conversation uncached. This hook:
   - lets cheap switches through without Claude Code's confirmation prompt
   - for expensive ones (big context, warm cache), asks first and names the
-    cheaper path: /handoff, /clear, /model
+    cheaper path: /compact, then /model
 
 Config (settings.json "env"):
   ROUTING_ASK_TOKENS   ask when the switch re-sends at least this many tokens (default 40000)
@@ -18,8 +18,24 @@ Any failure exits 0 with no output, so the switch proceeds normally.
 import json
 import os
 import sys
+import tempfile
 import time
 from pathlib import Path
+
+
+def just_compacted(session_id, window_min=15):
+    """True if post_compact.py marked this session as compacted recently.
+
+    Right after /compact the context is small, but the token count this hook
+    is handed may still describe the last pre-compaction response.
+    """
+    if not session_id:
+        return False
+    marker = Path(tempfile.gettempdir()) / "claude-model-routing" / f"{session_id}.compacted"
+    try:
+        return (time.time() - marker.stat().st_mtime) / 60 <= window_min
+    except OSError:
+        return False
 
 
 def env_float(name, default):
@@ -67,7 +83,8 @@ def main():
     fast = os.environ.get("ROUTING_FAST_SWITCH", "1") != "0"
 
     priced = isinstance(usd, (int, float)) and pricing in ("catalog", "configured")
-    cheap = ctx < ask_tokens or (priced and usd < ask_usd)
+    cheap = (ctx < ask_tokens or (priced and usd < ask_usd)
+             or just_compacted(data.get("session_id")))
 
     # Nothing to lose: small context, cheap target, or the cache is already cold
     # (staying would re-read everything too).
@@ -85,22 +102,26 @@ def main():
     project_dir = os.environ.get("CLAUDE_PROJECT_DIR") or data.get("cwd") or os.getcwd()
     age = fresh_handoff_minutes(project_dir)
     if age is not None:
-        steps = (f"cancel, then /clear and /model {target}. Your handoff from "
-                 f"{max(1, round(age))} min ago loads on its own after /clear")
+        steps = ["/clear", f"/model {target}"]
+        note = f" Your handoff from {max(1, round(age))} min ago loads by itself."
     else:
-        steps = f"cancel, run /handoff, then /clear and /model {target}"
-
-    reason = (f"This throws away the warm cache and re-sends ~{ctx // 1000}K tokens "
-              f"to {to_model}{cost}. Cheaper: {steps}. Or stay on this model and "
-              f"hand just the hard part to a subagent (/escalate).")
+        steps = ["/compact", f"/model {target}"]
+        note = ""
+    escalate = " Or stay on this model and use /escalate for the hard part."
+    head = f"This re-sends ~{ctx // 1000}K tokens to {to_model} with no cache{cost}."
 
     if source == "sdk":
-        # "ask" counts as a refusal outside interactive /model; just inform.
-        emit({"systemMessage": reason})
+        # Remote Control / SDK: "ask" would count as a refusal, so the switch
+        # goes ahead and this is just a heads-up for next time.
+        numbered = ", ".join(f"({i}) {s}" for i, s in enumerate(steps, 1))
+        emit({"systemMessage": f"{head} Next time, cheaper: {numbered}.{note}{escalate}"})
     else:
-        emit({"hookSpecificOutput": {"hookEventName": "PreModelSwitch",
-                                     "permissionDecision": "ask",
-                                     "permissionDecisionReason": reason + " Switch anyway?"}})
+        numbered = ", ".join(f"({i}) {s}" for i, s in enumerate(["choose No"] + steps, 1))
+        emit({"hookSpecificOutput": {
+            "hookEventName": "PreModelSwitch",
+            "permissionDecision": "ask",
+            "permissionDecisionReason": f"{head} Cheaper: {numbered}.{note}{escalate} Switch anyway?",
+        }})
     return 0
 
 

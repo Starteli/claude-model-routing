@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Write a compact handoff of the current work to .handoff/LATEST.md, so a different model or a fresh session can continue from a few thousand tokens instead of re-reading this whole conversation. Use when the user wants to switch models, start a fresh session, or pass the work to another agent or tool.
+description: Write a compact handoff of the current work to .handoff/LATEST.md without compacting this conversation, so a fresh session, another tool such as Codex, or a later day can pick it up from a few thousand tokens. Use when the user wants to save the state or pass the work on. For a plain model switch, /compact then /model is enough.
 argument-hint: "[target model, e.g. sonnet]"
 allowed-tools: Write, Bash(handoff-finalize *)
 # No `model:` here on purpose. On a skill without `context: fork`, a model

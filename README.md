@@ -1,6 +1,6 @@
 # model-routing
 
-A Claude Code plugin that makes model switching cheap.
+A Claude Code plugin that makes model switching cheap, and mostly automatic.
 
 ## The problem
 
@@ -12,32 +12,52 @@ Example: a 150K-token session on Sonnet 5.5, on a subscription (1-hour cache, so
 |---|---|
 | Keep going on Sonnet | 150K cached reads × $0.10/M ≈ **$0.015** |
 | `/model opus` | 150K uncached writes × $8/M ≈ **$1.20**, about 80x a normal turn |
-| `/handoff` → `/clear` → `/model opus` | Opus reads only the fixed part (system prompt, tools, CLAUDE.md) plus a ~1K handoff. At ~25K that's ≈ **$0.21** |
+| `/compact`, then `/model opus` | Opus reads the fixed part (system prompt, tools, CLAUDE.md) plus a ~1–2K summary. At ~25K that's ≈ **$0.21** |
 | `/escalate <question>` (stay on Sonnet) | An Opus subagent reads a short brief and the files it needs. Your Sonnet cache is untouched |
 
 The fixed part gets re-read on any switch, so the savings come from dropping the conversation history. To see your fixed part, check a fresh session's first turn. MCP servers make it bigger.
 
 On a subscription the dollar figures are only estimates. Your plan meters usage its own way, but the token math is the same.
 
-## What it adds
+## When it matters
 
-**`/handoff [model]`** writes `.handoff/LATEST.md`: goal, status, decisions with their reasons, key files, commands, gotchas and next steps, in under ~800 words. It archives a copy, records which transcript it came from, and keeps `.handoff/` out of git through `.git/info/exclude`, so it never touches your `.gitignore`. Then you run `/clear` and `/model <name>`, and the handoff loads automatically. The file is plain markdown, so Codex or any other agent can read it too.
+- **Picking a model when a session starts** is free. There's nothing to re-read yet.
+- **Switching mid-session** is the expensive moment. The plugin catches it for you.
+- **Coming back to an old session** after a break: the cache has expired, so the next message re-reads everything whichever model you use. That makes it the free moment to switch, and the plugin tells you so.
 
-**A switch guard (`PreModelSwitch` hook).** When a `/model` would throw away a warm cache on a big context, it asks first. The prompt shows the token count and estimated cost, plus the cheaper path. Cheap switches go straight through without Claude Code's usual confirmation: small context, a cache that's already cold, or a target as cheap as Haiku.
+The rest of the time there's nothing to do.
 
-**A resume tip.** If you resume a big session after the cache has expired, the next message re-reads everything anyway. That's the moment to switch models for free, and it tells you so.
+## How you use it
 
-**Subagents that route work without switching your session:**
+**To switch models mid-session**, type two commands:
+
+1. `/compact`
+2. `/model sonnet` (or whichever model you want)
+
+If you forget and type `/model` first, the guard stops you. It shows what the switch would cost and these same steps.
+
+**For most work you don't switch at all.** Claude sends pieces of work to other models through subagents on its own:
 
 | Agent | Model | Use |
 |---|---|---|
-| `model-routing:deep-thinker` | Opus | Hard design or debugging question when you're on a smaller model. Called with `/escalate <question>` |
+| `model-routing:deep-thinker` | Opus | Hard design or debugging question when you're on a smaller model. Ask for it with `/escalate <question>` |
 | `model-routing:implementer` | Sonnet | A settled, multi-file plan to carry out |
 | `model-routing:recall` | Haiku | Pull a specific detail out of old handoffs and transcripts, returning only excerpts instead of re-reading them |
 
-Each subagent starts with an empty context, so it never re-reads your conversation, and your main cache stays warm. A short note added at session start tells Claude to route this way instead of suggesting `/model`.
+Each subagent starts with an empty context, so it never re-reads your conversation, and your main cache stays warm.
 
-**Two helpers on PATH while the plugin is on:** `handoff-finalize`, which the skill calls, and `transcript-grep "<regex>" [--tools] [--all]`, which searches past transcripts and prints short excerpts.
+**To save the state without compacting**, for Codex, another session or tomorrow, run `/handoff`. It writes `.handoff/LATEST.md`. After `/clear`, a handoff less than an hour old loads by itself.
+
+## What runs automatically
+
+| Hook | When | What it does |
+|---|---|---|
+| `PreModelSwitch` | You type `/model` | Big context and warm cache: asks first, with the cost and the cheaper steps. Cheap switches go through without Claude Code's usual confirmation |
+| `PreCompact` | Any compaction | Makes the summary cover what a new model needs: decisions and why, files, exact commands and errors, next steps |
+| `PostCompact` | Any compaction | Tells the guard the context is small now. After a manual `/compact`, also saves the summary to `.handoff/LATEST.md` |
+| `SessionStart` | Start, `/clear`, resume, after compaction | Adds a short routing note, loads a fresh handoff after `/clear`, and gives the resume tip |
+
+Handoffs are kept out of git through `.git/info/exclude`, so your `.gitignore` is never touched. Two helpers sit on PATH while the plugin is on: `handoff-finalize`, which `/handoff` uses, and `transcript-grep "<regex>" [--tools] [--all]`, which searches past transcripts and prints short excerpts.
 
 ## Install
 
@@ -63,7 +83,7 @@ claude plugin marketplace add <owner>/claude-model-routing
 claude plugin install model-routing@claude-routing
 ```
 
-It costs about 430 tokens always-on (skill and agent descriptions) plus about 170 for the session-start note.
+It costs about 600 tokens per session: the skill and agent descriptions plus the routing note.
 
 ## Tuning
 
@@ -74,7 +94,9 @@ Set these in the `env` block of `~/.claude/settings.json`:
 | `ROUTING_ASK_TOKENS` | `40000` | Ask before a switch that re-sends at least this many tokens |
 | `ROUTING_ASK_USD` | `0.10` | ...and whose estimated re-cache cost is at least this much |
 | `ROUTING_FAST_SWITCH` | `1` | `0` keeps Claude Code's own confirmation on cheap switches |
-| `ROUTING_POLICY` | `1` | `0` drops the session-start routing note |
+| `ROUTING_POLICY` | `1` | `0` drops the routing note |
+| `ROUTING_COMPACT_FORMAT` | `1` | `0` leaves compaction summaries as Claude Code writes them |
+| `ROUTING_SAVE_COMPACT` | `1` | `0` stops saving `/compact` summaries to `.handoff/` |
 | `ROUTING_HANDOFF_DIR` | `.handoff` | Where handoffs live, relative to the project |
 | `ROUTING_HANDOFF_LOAD_MIN` | `60` | After `/clear`, load the full handoff only if it's younger than this. Older handoffs (up to 24h) get a one-line pointer instead |
 

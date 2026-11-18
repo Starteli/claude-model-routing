@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""SessionStart hook (startup | clear | resume).
+"""SessionStart hook (startup | clear | resume | compact).
 
-  - startup/clear: adds a short routing note so Claude delegates to other
-    models through subagents instead of suggesting /model.
+  - startup/clear/compact: adds a short routing note so Claude delegates to
+    other models through subagents instead of suggesting /model. (Compaction
+    drops earlier context, so the note is added again.)
   - clear: if a handoff was written in the last hour, loads it in full. This is
     the second half of the /handoff -> /clear -> /model flow.
   - startup/clear with an older handoff (< 24h): adds a one-line pointer only.
@@ -30,7 +31,8 @@ POLICY = (
     "hits a hard design or debugging question, use model-routing:deep-thinker "
     "(Opus). Subagents start with an empty context, so brief "
     "them with the goal, file paths and decisions, never the history. If the "
-    "user wants a different main model, suggest /handoff, then /clear, then /model."
+    "user wants a different main model, tell them to run /compact first and "
+    "then /model <name>."
 )
 
 
@@ -74,7 +76,7 @@ def main():
     context = []
     notice = None
 
-    if source in ("startup", "clear") and os.environ.get("ROUTING_POLICY", "1") != "0":
+    if source in ("startup", "clear", "compact") and os.environ.get("ROUTING_POLICY", "1") != "0":
         context.append(POLICY)
 
     if source in ("startup", "clear") and latest.is_file():
