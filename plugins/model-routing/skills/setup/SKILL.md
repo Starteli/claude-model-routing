@@ -1,12 +1,14 @@
 ---
 name: setup
-description: Turn on running approved plans in a fresh context, and choose whether they run on Sonnet automatically (opusplan) or on whatever model the user is using.
-argument-hint: "[sonnet | same]"
+description: Turn on running approved plans in a fresh context, keeping the user's own model (default), or optionally pinning opusplan so Sonnet executes.
+argument-hint: "[same | sonnet]"
 disable-model-invocation: true
 allowed-tools: Bash(routing-setup *)
 ---
 
-The user's choice: "$ARGUMENTS". "same" means plans run on whatever model they're using. Anything else, including nothing, means "sonnet": Opus plans and Sonnet executes (opusplan).
+The user's choice: "$ARGUMENTS". "sonnet" means pin opusplan: Opus plans and Sonnet executes. Anything else, including nothing, means "same": plans run on whatever model they're using, and an opusplan pin from an earlier setup is removed.
+
+If they chose "sonnet", warn them first in one line: pinning opusplan switches off Claude Code's own model mix (a lead model with cheaper workers, shown as its own row in /model) if their account has one.
 
 1. Run `routing-setup --check --executor <sonnet|same>` and show the user, in a short numbered list, what it would change in their settings.
 2. If something would change, run `routing-setup --apply --executor <sonnet|same>` and report the result in two or three lines.
