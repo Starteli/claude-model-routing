@@ -1,0 +1,1273 @@
+[
+ {
+  "name": "ph-1 no change",
+  "script": "prompt_hook",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": {
+    "mode": "OPEN",
+    "worker": null,
+    "default_worker": null,
+    "origin": null,
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "OPEN||0|0",
+   "user_sig": "OPEN||0|0",
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "stdout_empty": true,
+   "record": {
+    "last_prompt_ts": "$RECENT"
+   }
+  }
+ },
+ {
+  "name": "ph-2 /model drop",
+  "script": "prompt_hook",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "LOCKED|claude-sonnet-5|0|0",
+   "user_sig": "LOCKED|claude-sonnet-5|0|0",
+   "orphan_told": false,
+   "last_switch": {
+    "source": "picker",
+    "from": "claude-opus-5-5",
+    "to": "claude-sonnet-5",
+    "ts": "$NOW"
+   },
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "json_startswith": {
+    "hookSpecificOutput.additionalContext": "Current routing (replaces earlier routing notes): subagent models are selectable"
+   },
+   "json_absent": [
+    "systemMessage"
+   ],
+   "record": {
+    "lead": null,
+    "state": {
+     "mode": "OPEN"
+    },
+    "user_sig": "OPEN||0|0"
+   }
+  }
+ },
+ {
+  "name": "ph-3 resume drop",
+  "script": "prompt_hook",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "LOCKED|claude-sonnet-5|0|0",
+   "user_sig": "LOCKED|claude-sonnet-5|0|0",
+   "orphan_told": false,
+   "last_switch": {
+    "source": "resume",
+    "from": "claude-opus-5-5",
+    "to": "claude-sonnet-5",
+    "ts": "$NOW"
+   },
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Mix off after resume \u00b7 restore: /model \u2192 the mix row"
+   },
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "subagent models are selectable"
+   }
+  }
+ },
+ {
+  "name": "ph-3b resume drop with label",
+  "script": "prompt_hook",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": "Opus + Sonnet",
+   "claude_sig": "LOCKED|claude-sonnet-5|0|0",
+   "user_sig": "LOCKED|claude-sonnet-5|0|0",
+   "orphan_told": false,
+   "last_switch": {
+    "source": "resume",
+    "from": "claude-opus-5-5",
+    "to": "claude-sonnet-5",
+    "ts": "$NOW"
+   },
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Mix off after resume \u00b7 restore: /model \u2192 \"Opus + Sonnet\" row"
+   }
+  }
+ },
+ {
+  "name": "ph-3c resume switch older than last prompt: no line",
+  "script": "prompt_hook",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "LOCKED|claude-sonnet-5|0|0",
+   "user_sig": "LOCKED|claude-sonnet-5|0|0",
+   "orphan_told": false,
+   "last_switch": {
+    "source": "resume",
+    "from": "claude-opus-5-5",
+    "to": "claude-sonnet-5",
+    "ts": "$NOW-500"
+   },
+   "last_prompt_ts": "$NOW-10",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "json_absent": [
+    "systemMessage"
+   ],
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "selectable"
+   }
+  }
+ },
+ {
+  "name": "ph-3d resume drop of a settings-forced state: no line",
+  "script": "prompt_hook",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "settings:user",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "LOCKED|claude-sonnet-5|0|0",
+   "user_sig": "LOCKED|claude-sonnet-5|0|0",
+   "orphan_told": false,
+   "last_switch": {
+    "source": "resume",
+    "from": "claude-opus-5-5",
+    "to": "claude-sonnet-5",
+    "ts": "$NOW"
+   },
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "json_absent": [
+    "systemMessage"
+   ]
+  }
+ },
+ {
+  "name": "ph-4 orphan",
+  "script": "prompt_hook",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-haiku-5-5"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-sonnet-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-haiku-5-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "LOCKED|claude-haiku-5-5|0|0",
+   "user_sig": "LOCKED|claude-haiku-5-5|0|0",
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "steps": [
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "UserPromptSubmit",
+     "prompt": "hi",
+     "permission_mode": "default",
+     "prompt_id": "p1"
+    },
+    "expect": {
+     "json_equals": {
+      "systemMessage": "Mix half-on (main Sonnet 5) \u00b7 fix: /model \u2192 the mix row"
+     },
+     "json_contains": {
+      "hookSpecificOutput.additionalContext": [
+       "subagents run on claude-haiku-5-5",
+       "The session model (claude-sonnet-5) differs from the mix lead (claude-opus-5-5); forks and model-routing:think run on claude-sonnet-5."
+      ]
+     },
+     "record": {
+      "orphan_told": true
+     }
+    }
+   },
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "UserPromptSubmit",
+     "prompt": "hi",
+     "permission_mode": "default",
+     "prompt_id": "p1"
+    },
+    "expect": {
+     "stdout_empty": true
+    }
+   }
+  ]
+ },
+ {
+  "name": "ph-5 hookless mix-row pick",
+  "script": "prompt_hook",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": null,
+   "state": {
+    "mode": "OPEN",
+    "worker": null,
+    "default_worker": null,
+    "origin": null,
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "OPEN||0|0",
+   "user_sig": "OPEN||0|0",
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "json_startswith": {
+    "hookSpecificOutput.additionalContext": "Current routing (replaces earlier routing notes): subagents run on this session's model"
+   },
+   "json_absent": [
+    "systemMessage"
+   ],
+   "record": {
+    "lead": "claude-opus-5-5",
+    "state": {
+     "mode": "LOCKED"
+    }
+   }
+  }
+ },
+ {
+  "name": "ph-5b OPEN->LOCKED reads the cache label",
+  "script": "prompt_hook",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "files": {
+   "config/.claude.json": {
+    "clientDataCacheSlots": {
+     "a": {
+      "data": {
+       "tengu_zesty_horizon": {
+        "lead": "claude-opus-5-5",
+        "worker": "claude-sonnet-5",
+        "label": "Opus + Sonnet"
+       }
+      },
+      "model": "claude-opus-5-5"
+     }
+    }
+   }
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": null,
+   "state": {
+    "mode": "OPEN",
+    "worker": null,
+    "default_worker": null,
+    "origin": null,
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "OPEN||0|0",
+   "user_sig": "OPEN||0|0",
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "record": {
+    "label": "Opus + Sonnet",
+    "state": {
+     "origin": "mix"
+    },
+    "lead": "claude-opus-5-5"
+   },
+   "json_absent": [
+    "systemMessage"
+   ]
+  }
+ },
+ {
+  "name": "ph-6 plan once",
+  "script": "prompt_hook",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": {
+    "mode": "OPEN",
+    "worker": null,
+    "default_worker": null,
+    "origin": null,
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "OPEN||0|0",
+   "user_sig": "OPEN||0|0",
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "steps": [
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "UserPromptSubmit",
+     "prompt": "hi",
+     "permission_mode": "plan",
+     "prompt_id": "p1"
+    },
+    "expect": {
+     "json_contains": {
+      "hookSpecificOutput.additionalContext": [
+       "Plan mode: the approved plan may be all a fresh session sees",
+       "Executor: sonnet"
+      ]
+     }
+    }
+   },
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "UserPromptSubmit",
+     "prompt": "hi",
+     "permission_mode": "plan",
+     "prompt_id": "p1"
+    },
+    "expect": {
+     "stdout_empty": true
+    }
+   },
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "UserPromptSubmit",
+     "prompt": "hi",
+     "permission_mode": "default",
+     "prompt_id": "p1"
+    },
+    "expect": {
+     "stdout_empty": true
+    }
+   },
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "UserPromptSubmit",
+     "prompt": "hi",
+     "permission_mode": "plan",
+     "prompt_id": "p1"
+    },
+    "expect": {
+     "json_contains": {
+      "hookSpecificOutput.additionalContext": "Plan mode:"
+     }
+    }
+   }
+  ]
+ },
+ {
+  "name": "ph-6b plan note in LOCKED has no Executor line",
+  "script": "prompt_hook",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "LOCKED|claude-sonnet-5|0|0",
+   "user_sig": "LOCKED|claude-sonnet-5|0|0",
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "plan",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "Plan mode:"
+   },
+   "json_not_contains": {
+    "hookSpecificOutput.additionalContext": "Executor"
+   }
+  }
+ },
+ {
+  "name": "ph-6c ROUTING_EXECUTE=0: no plan note",
+  "script": "prompt_hook",
+  "env": {
+   "ROUTING_EXECUTE": "0"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": {
+    "mode": "OPEN",
+    "worker": null,
+    "default_worker": null,
+    "origin": null,
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "OPEN||0|0",
+   "user_sig": "OPEN||0|0",
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "plan",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "ph-7 after resume",
+  "script": "prompt_hook",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": {
+    "mode": "OPEN",
+    "worker": null,
+    "default_worker": null,
+    "origin": null,
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": "OPEN||0|0",
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "Current routing"
+   },
+   "json_absent": [
+    "systemMessage"
+   ],
+   "record": {
+    "claude_sig": "OPEN||0|0"
+   }
+  }
+ },
+ {
+  "name": "ph-8 subagent",
+  "script": "prompt_hook",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": {
+    "mode": "OPEN",
+    "worker": null,
+    "default_worker": null,
+    "origin": null,
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1",
+   "agent_id": "a1"
+  },
+  "expect": {
+   "stdout_empty": true,
+   "record_unchanged": true
+  }
+ },
+ {
+  "name": "ph-9 effort locked",
+  "script": "prompt_hook",
+  "env": {
+   "CLAUDE_CODE_EFFORT_LEVEL": "high"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": {
+    "mode": "OPEN",
+    "worker": null,
+    "default_worker": null,
+    "origin": null,
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "OPEN||0|0",
+   "user_sig": "OPEN||0|0",
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "Effort is fixed by CLAUDE_CODE_EFFORT_LEVEL."
+   },
+   "json_not_contains": {
+    "hookSpecificOutput.additionalContext": "Per-call `effort`"
+   },
+   "json_absent": [
+    "systemMessage"
+   ]
+  }
+ },
+ {
+  "name": "ph-10 headless",
+  "script": "prompt_hook",
+  "env": {
+   "CLAUDE_CODE_SESSION_ATTENDED": "0"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "LOCKED|claude-sonnet-5|0|0",
+   "user_sig": "LOCKED|claude-sonnet-5|0|0",
+   "orphan_told": false,
+   "last_switch": {
+    "source": "resume",
+    "from": "claude-opus-5-5",
+    "to": "claude-sonnet-5",
+    "ts": "$NOW"
+   },
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "Current routing"
+   },
+   "json_absent": [
+    "systemMessage"
+   ]
+  }
+ },
+ {
+  "name": "ph-11 no record: note, no user line",
+  "script": "prompt_hook",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "Current routing"
+   },
+   "json_absent": [
+    "systemMessage"
+   ],
+   "files_exist": [
+    "data/sessions/$KEY.json"
+   ]
+  }
+ },
+ {
+  "name": "ph-12 bad stdin",
+  "script": "prompt_hook",
+  "stdin": "{",
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "ph-11 late resume switch (async PostModelSwitch) still gives U10",
+  "script": "prompt_hook",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-haiku-5-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "LOCKED|claude-haiku-5-5|0|0",
+   "user_sig": "LOCKED|claude-haiku-5-5|0|0",
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "steps": [
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "UserPromptSubmit",
+     "prompt": "hi",
+     "permission_mode": "default",
+     "prompt_id": "p1"
+    },
+    "expect": {
+     "json_absent": [
+      "systemMessage"
+     ],
+     "record": {
+      "drop_pending": "$RECENT"
+     }
+    }
+   },
+   {
+    "script": "after_switch",
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "PostModelSwitch",
+     "from_model": "claude-opus-5-5",
+     "to_model": "claude-sonnet-5",
+     "source": "resume"
+    },
+    "expect": {
+     "stdout_empty": true
+    }
+   },
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "UserPromptSubmit",
+     "prompt": "hi",
+     "permission_mode": "default",
+     "prompt_id": "p2"
+    },
+    "expect": {
+     "json_equals": {
+      "systemMessage": "Mix off after resume \u00b7 restore: /model \u2192 the mix row"
+     },
+     "record": {
+      "drop_pending": null
+     }
+    }
+   },
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "UserPromptSubmit",
+     "prompt": "hi",
+     "permission_mode": "default",
+     "prompt_id": "p3"
+    },
+    "expect": {
+     "stdout_empty": true
+    }
+   }
+  ]
+ },
+ {
+  "name": "ph-12 lead unknown: a switch target never becomes the lead",
+  "script": "after_switch",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "LOCKED|claude-sonnet-5|0|0",
+   "user_sig": "LOCKED|claude-sonnet-5|0|0",
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "steps": [
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "PostModelSwitch",
+     "from_model": "claude-opus-5-5",
+     "to_model": "claude-haiku-5-5",
+     "source": "picker"
+    },
+    "expect": {
+     "record": {
+      "lead": null,
+      "lead_hint": "claude-opus-5-5",
+      "main_model": "claude-haiku-5-5"
+     }
+    }
+   },
+   {
+    "script": "prompt_hook",
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "UserPromptSubmit",
+     "prompt": "hi",
+     "permission_mode": "default",
+     "prompt_id": "p1"
+    },
+    "expect": {
+     "record": {
+      "lead": "claude-opus-5-5",
+      "main_model": "claude-haiku-5-5"
+     },
+     "json_equals": {
+      "systemMessage": "Mix half-on (main Haiku 5.5) \u00b7 fix: /model \u2192 the mix row"
+     },
+     "json_contains": {
+      "hookSpecificOutput.additionalContext": "differs from the mix lead (claude-opus-5-5)"
+     }
+    }
+   },
+   {
+    "script": "after_switch",
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "PostModelSwitch",
+     "from_model": "claude-haiku-5-5",
+     "to_model": "claude-opus-5-5",
+     "source": "picker"
+    },
+    "expect": {
+     "record": {
+      "lead": "claude-opus-5-5"
+     }
+    }
+   },
+   {
+    "script": "prompt_hook",
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "UserPromptSubmit",
+     "prompt": "hi",
+     "permission_mode": "default",
+     "prompt_id": "p2"
+    },
+    "expect": {
+     "json_absent": [
+      "systemMessage"
+     ],
+     "record": {
+      "lead": "claude-opus-5-5"
+     },
+     "json_not_contains": {
+      "hookSpecificOutput.additionalContext": "differs from"
+     }
+    }
+   }
+  ]
+ },
+ {
+  "name": "ph-12b lead unknown, no switch yet: main model becomes the lead",
+  "script": "prompt_hook",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": null,
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "record": {
+    "lead": "claude-opus-5-5"
+   }
+  }
+ },
+ {
+  "name": "ph-13 orphan, origin unknown and no label: neutral line",
+  "script": "prompt_hook",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-haiku-5-5"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-sonnet-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-haiku-5-5",
+    "default_worker": null,
+    "origin": "unknown",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "LOCKED|claude-haiku-5-5|0|0",
+   "user_sig": "LOCKED|claude-haiku-5-5|0|0",
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Main now Sonnet 5; subagents still Haiku 5.5 \u00b7 /model-routing:status"
+   },
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": [
+     "forced by CLAUDE_CODE_SUBAGENT_MODEL_FORCE (possibly the model mix)",
+     "differs from the model the session started on (claude-opus-5-5)"
+    ]
+   }
+  }
+ },
+ {
+  "name": "ph-14 UTF-8 prompt read as UTF-8 even when the locale is cp1252",
+  "script": "prompt_hook",
+  "env": {
+   "PYTHONIOENCODING": "cp1252"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": {
+    "mode": "OPEN",
+    "worker": null,
+    "default_worker": null,
+    "origin": null,
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": "{\"session_id\": \"s1\", \"hook_event_name\": \"UserPromptSubmit\", \"prompt\": \"\u0141\u00f3d\u017a \u016f \u00e9\", \"permission_mode\": \"default\", \"prompt_id\": \"p1\"}",
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "subagent models are selectable"
+   }
+  }
+ }
+]

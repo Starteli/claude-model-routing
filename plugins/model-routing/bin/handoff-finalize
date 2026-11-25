@@ -2,7 +2,8 @@
 """handoff-finalize <project_dir> [session_id]
 
 Run by the /handoff skill after Claude writes <project>/.handoff/LATEST.md:
-  - stamps the source transcript path so the recall agent can dig into it later
+  - stamps the source session id (so only /clear in that session auto-loads it)
+    and transcript path (so the recall agent can dig into it later)
   - archives a timestamped copy in .handoff/archive/
   - keeps .handoff/ out of git through .git/info/exclude (never touches .gitignore)
   - prints the handoff size and the next steps
@@ -72,7 +73,8 @@ def main(argv):
     text = "\n".join(l for l in text.rstrip().splitlines() if not l.startswith(STAMP))
     tp = transcript_path(project_dir, session_id)
     when = time.strftime("%Y-%m-%d %H:%M")
-    stamp = f"{STAMP} written {when}" + (f"; transcript {tp}" if tp else "") + " -->"
+    stamp = (f"{STAMP} written {when}" + (f"; session {session_id}" if session_id else "")
+             + (f"; transcript {tp}" if tp else "") + " -->")
     text = f"{text}\n\n{stamp}\n"
     latest.write_text(text, encoding="utf-8")
 

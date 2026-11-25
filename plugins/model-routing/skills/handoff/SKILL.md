@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Write a compact handoff of the current work to .handoff/LATEST.md without compacting this conversation, so a fresh session, another tool such as Codex, or a later day can pick it up from a few thousand tokens. Use when the user wants to save the state or pass the work on. For a plain model switch, /compact then /model is enough.
+description: Save the current work to .handoff/LATEST.md (a few thousand tokens) without compacting, so a fresh session or another tool can continue it.
 argument-hint: "[target model, e.g. sonnet]"
 allowed-tools: Write, Bash(handoff-finalize *)
 # No `model:` here on purpose. On a skill without `context: fork`, a model
@@ -57,4 +57,4 @@ Then run:
 handoff-finalize "${CLAUDE_PROJECT_DIR}" "${CLAUDE_SESSION_ID}"
 ```
 
-Finally, tell the user in two or three short lines how big the handoff is (from the script output) and what to do next: run `/clear`, then `/model $ARGUMENTS` (or `/model <name>` if no target was given). The handoff loads by itself after `/clear`. Another tool can read `.handoff/LATEST.md` directly.
+Finally, tell the user in two or three numbered lines: the handoff size (from the script output); then run /clear, and the handoff loads by itself. If they also want another model: when the routing note says subagents are forced (by the model mix or by CLAUDE_CODE_SUBAGENT_MODEL_FORCE), tell them that under a model mix any /model choice other than the mix row turns the mix off; otherwise /model $ARGUMENTS after /clear.

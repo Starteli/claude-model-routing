@@ -1,0 +1,1059 @@
+[
+ {
+  "name": "sg-1 same model",
+  "script": "switch_guard",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-opus-5-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "sg-1b same model, [1m] suffix",
+  "script": "switch_guard",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-opus-5-5[1m]",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "sg-2 small context",
+  "script": "switch_guard",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 1000,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "hookSpecificOutput.permissionDecision": "allow"
+   }
+  }
+ },
+ {
+  "name": "sg-2b ROUTING_FAST_SWITCH=0",
+  "script": "switch_guard",
+  "env": {
+   "ROUTING_FAST_SWITCH": "0"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 1000,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "sg-2c cold cache allows",
+  "script": "switch_guard",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": false,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "hookSpecificOutput.permissionDecision": "allow"
+   }
+  }
+ },
+ {
+  "name": "sg-3 OPEN ask",
+  "script": "switch_guard",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "hookSpecificOutput.permissionDecision": "ask"
+   },
+   "json_startswith": {
+    "hookSpecificOutput.permissionDecisionReason": "Re-sends ~182K tokens to Sonnet 5 uncached (~$1.14). Cheaper: 1) /compact 2) /model sonnet"
+   },
+   "json_contains": {
+    "hookSpecificOutput.permissionDecisionReason": "/model-routing:execute sonnet"
+   },
+   "json_not_contains": {
+    "hookSpecificOutput.permissionDecisionReason": [
+     "choose No",
+     "Switch anyway",
+     "leaves the model mix"
+    ]
+   }
+  }
+ },
+ {
+  "name": "sg-3b unpriced: no dollar figure",
+  "script": "switch_guard",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "unknown"
+  },
+  "expect": {
+   "json_startswith": {
+    "hookSpecificOutput.permissionDecisionReason": "Re-sends ~182K tokens to Sonnet 5 uncached. Cheaper"
+   },
+   "json_not_contains": {
+    "hookSpecificOutput.permissionDecisionReason": "$"
+   }
+  }
+ },
+ {
+  "name": "sg-3c fresh handoff: /clear first",
+  "script": "switch_guard",
+  "files": {
+   "project/.handoff/LATEST.md": "# h\n\n<!-- handoff-source: written 2026-11-25 10:00; session s1; transcript none -->\n"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.permissionDecisionReason": "Cheaper: 1) /clear (your handoff reloads) 2) /model sonnet"
+   }
+  }
+ },
+ {
+  "name": "sg-4 LOCKED leaving mix",
+  "script": "switch_guard",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "hookSpecificOutput.permissionDecision": "ask"
+   },
+   "json_contains": {
+    "hookSpecificOutput.permissionDecisionReason": "Also leaves the model mix (Opus 5.5 lead \u00b7 Sonnet 5 subagents)."
+   },
+   "json_not_contains": {
+    "hookSpecificOutput.permissionDecisionReason": [
+     "execute",
+     "choose No",
+     "Switch anyway"
+    ]
+   }
+  }
+ },
+ {
+  "name": "sg-5 LOCKED cheap",
+  "script": "switch_guard",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 1000,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "hookSpecificOutput.permissionDecision": "allow"
+   }
+  }
+ },
+ {
+  "name": "sg-6 mix guard opt-in",
+  "script": "switch_guard",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
+   "ROUTING_MIX_GUARD": "1"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "picker",
+   "context_tokens": 1000,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "hookSpecificOutput.permissionDecision": "ask",
+    "hookSpecificOutput.permissionDecisionReason": "Leaving Opus 5.5 turns the model mix off (Sonnet 5 subagents). Keep it: /model \u2192 the mix row."
+   }
+  }
+ },
+ {
+  "name": "sg-6b mix guard does not ask on auto",
+  "script": "switch_guard",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
+   "ROUTING_MIX_GUARD": "1"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "auto",
+   "context_tokens": 1000,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "hookSpecificOutput.permissionDecision": "allow"
+   }
+  }
+ },
+ {
+  "name": "sg-7 sdk",
+  "script": "switch_guard",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "sdk",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Re-sent ~182K tokens to Sonnet 5 uncached (~$1.14). Next time: 1) /compact 2) switch."
+   },
+   "json_absent": [
+    "hookSpecificOutput"
+   ]
+  }
+ },
+ {
+  "name": "sg-8 back to the lead",
+  "script": "switch_guard",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
+   "ROUTING_MIX_GUARD": "1"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-sonnet-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-sonnet-5",
+   "to_model": "claude-opus-5-5",
+   "requested_model": "opus",
+   "source": "picker",
+   "context_tokens": 1000,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "hookSpecificOutput.permissionDecision": "allow"
+   }
+  }
+ },
+ {
+  "name": "sg-9 corrupt record",
+  "script": "switch_guard",
+  "record": "{{",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "hookSpecificOutput.permissionDecision": "ask"
+   },
+   "json_startswith": {
+    "hookSpecificOutput.permissionDecisionReason": "Re-sends ~182K tokens to Sonnet 5 uncached (~$1.14). Cheaper: 1) /compact 2) /model sonnet."
+   }
+  }
+ },
+ {
+  "name": "sg-10 never touches .claude.json (any open/stat of it exits 3)",
+  "script": "switch_guard",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
+   "PYTHONPATH": "$T/site"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "steps": [
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "PreModelSwitch",
+     "from_model": "claude-opus-5-5",
+     "to_model": "claude-sonnet-5",
+     "requested_model": "sonnet",
+     "source": "command",
+     "context_tokens": 182340,
+     "prompt_cache_warm": true,
+     "cache_ttl": "5m",
+     "estimated_cache_write_usd": 1.14,
+     "pricing": "catalog"
+    },
+    "expect": {
+     "max_seconds": 1,
+     "json_equals": {
+      "hookSpecificOutput.permissionDecision": "ask"
+     }
+    }
+   },
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "PreModelSwitch",
+     "from_model": "claude-opus-5-5",
+     "to_model": "claude-sonnet-5",
+     "requested_model": "sonnet",
+     "source": "command",
+     "context_tokens": 1000,
+     "prompt_cache_warm": true,
+     "cache_ttl": "5m",
+     "estimated_cache_write_usd": 1.14,
+     "pricing": "catalog"
+    },
+    "expect": {
+     "max_seconds": 1,
+     "json_equals": {
+      "hookSpecificOutput.permissionDecision": "allow"
+     }
+    }
+   }
+  ],
+  "files": {
+   "site/sitecustomize.py": "import builtins, os, sys\n_open, _stat = builtins.open, os.stat\ndef _bad(p):\n    try:\n        return str(os.fspath(p)).endswith('.claude.json')\n    except TypeError:\n        return False\ndef open_(p, *a, **k):\n    if _bad(p): os._exit(3)\n    return _open(p, *a, **k)\ndef stat_(p, *a, **k):\n    if _bad(p): os._exit(3)\n    return _stat(p, *a, **k)\nbuiltins.open, os.stat = open_, stat_\n",
+   "config/.claude.json": {
+    "clientDataCacheSlots": {
+     "a": {
+      "data": {
+       "tengu_zesty_horizon": {
+        "lead": "claude-opus-5-5",
+        "worker": "claude-sonnet-5",
+        "label": "Opus + Sonnet"
+       }
+      },
+      "model": "claude-opus-5-5"
+     }
+    }
+   }
+  }
+ },
+ {
+  "name": "sg-11 just compacted",
+  "script": "switch_guard",
+  "files": {
+   "data/compacted/s1": "manual"
+  },
+  "mtimes": {
+   "data/compacted/s1": "$NOW"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "hookSpecificOutput.permissionDecision": "allow"
+   }
+  }
+ },
+ {
+  "name": "sg-11b old compaction marker",
+  "script": "switch_guard",
+  "files": {
+   "data/compacted/s1": "manual"
+  },
+  "mtimes": {
+   "data/compacted/s1": "$NOW-3600"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "hookSpecificOutput.permissionDecision": "ask"
+   }
+  }
+ },
+ {
+  "name": "sg-12 bad stdin",
+  "script": "switch_guard",
+  "stdin": "nope",
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "sg-3d handoff from another session: no '/clear (your handoff reloads)'",
+  "script": "switch_guard",
+  "files": {
+   "project/.handoff/LATEST.md": "# h\n\n<!-- handoff-source: written x; session s9; transcript none -->\n"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.permissionDecisionReason": "Cheaper: 1) /compact 2) /model sonnet"
+   }
+  }
+ },
+ {
+  "name": "sg-3e own handoff older than ROUTING_HANDOFF_LOAD_MIN: /compact",
+  "script": "switch_guard",
+  "files": {
+   "project/.handoff/LATEST.md": "# h\n\n<!-- handoff-source: written x; session s1; transcript none -->\n"
+  },
+  "mtimes": {
+   "project/.handoff/LATEST.md": "$NOW-1200"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.permissionDecisionReason": "Cheaper: 1) /compact 2) /model sonnet"
+   }
+  }
+ },
+ {
+  "name": "sg-12 headless (-p): never ask, even big and warm",
+  "script": "switch_guard",
+  "env": {
+   "CLAUDE_CODE_SESSION_ATTENDED": "0"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "hookSpecificOutput.permissionDecision": "allow"
+   }
+  }
+ },
+ {
+  "name": "sg-12b headless with ROUTING_MIX_GUARD=1: never ask",
+  "script": "switch_guard",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
+   "CLAUDE_CODE_SESSION_ATTENDED": "0",
+   "ROUTING_MIX_GUARD": "1"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "picker",
+   "context_tokens": 1000,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "hookSpecificOutput.permissionDecision": "allow"
+   }
+  }
+ },
+ {
+  "name": "sg-12c sdk headless: no systemMessage",
+  "script": "switch_guard",
+  "env": {
+   "CLAUDE_CODE_SESSION_ATTENDED": "0"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "sdk",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_absent": [
+    "systemMessage"
+   ],
+   "stdout_not_contains": [
+    "\"ask\""
+   ]
+  }
+ },
+ {
+  "name": "sg-13 back to the lead while half-on: point at the mix row",
+  "script": "switch_guard",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-sonnet-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": "Opus + Sonnet",
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-sonnet-5",
+   "to_model": "claude-opus-5-5",
+   "requested_model": "opus",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.permissionDecisionReason": "Cheaper: 1) /compact 2) /model \u2192 \"Opus + Sonnet\" row."
+   },
+   "json_not_contains": {
+    "hookSpecificOutput.permissionDecisionReason": [
+     "/model opus",
+     "execute",
+     "leave"
+    ]
+   }
+  }
+ },
+ {
+  "name": "sg-14 turning the mix on (OPEN, target is the cached mix lead): mix row, no execute",
+  "script": "switch_guard",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-sonnet-5",
+   "lead": null,
+   "state": {
+    "mode": "OPEN",
+    "worker": null,
+    "default_worker": null,
+    "origin": null,
+    "effort_locked": false
+   },
+   "label": "Opus + Sonnet",
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {},
+   "mix_lead": "claude-opus-5-5"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-sonnet-5",
+   "to_model": "claude-opus-5-5",
+   "requested_model": "opus",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.permissionDecisionReason": "2) /model \u2192 \"Opus + Sonnet\" row."
+   },
+   "json_not_contains": {
+    "hookSpecificOutput.permissionDecisionReason": [
+     "execute",
+     "/model opus"
+    ]
+   }
+  }
+ },
+ {
+  "name": "sg-15 origin unknown, no mix evidence: 'May also leave a model mix'",
+  "script": "switch_guard",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "unknown",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.permissionDecisionReason": "May also leave a model mix (Opus 5.5 lead \u00b7 Sonnet 5 subagents)."
+   }
+  }
+ },
+ {
+  "name": "sg-10b the .claude.json tripwire works (session_start does read it)",
+  "script": "session_start",
+  "files": {
+   "site/sitecustomize.py": "import builtins, os, sys\n_open, _stat = builtins.open, os.stat\ndef _bad(p):\n    try:\n        return str(os.fspath(p)).endswith('.claude.json')\n    except TypeError:\n        return False\ndef open_(p, *a, **k):\n    if _bad(p): os._exit(3)\n    return _open(p, *a, **k)\ndef stat_(p, *a, **k):\n    if _bad(p): os._exit(3)\n    return _stat(p, *a, **k)\nbuiltins.open, os.stat = open_, stat_\n",
+   "config/.claude.json": {
+    "clientDataCacheSlots": {
+     "a": {
+      "data": {
+       "tengu_zesty_horizon": {
+        "lead": "claude-opus-5-5",
+        "worker": "claude-sonnet-5",
+        "label": "Opus + Sonnet"
+       }
+      },
+      "model": "claude-opus-5-5"
+     }
+    }
+   }
+  },
+  "env": {
+   "PYTHONPATH": "$T/site"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "exit": 3
+  }
+ }
+]

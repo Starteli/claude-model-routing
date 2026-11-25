@@ -1,0 +1,148 @@
+[
+ {
+  "name": "rs-1 no Python: startup line",
+  "script": "session_start",
+  "nopy": true,
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup"
+  },
+  "expect": {
+   "stdout_json": {
+    "systemMessage": "model-routing is off: Python 3 not found."
+   }
+  }
+ },
+ {
+  "name": "rs-1b no Python: compact is silent",
+  "script": "session_start",
+  "nopy": true,
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "compact"
+  },
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "rs-1c no Python: headless is silent",
+  "script": "session_start",
+  "nopy": true,
+  "env": {
+   "CLAUDE_CODE_SESSION_ATTENDED": "0"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup"
+  },
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "rs-1d no Python: headless + ROUTING_SHOW_HEADLESS=1 shows the line",
+  "script": "session_start",
+  "nopy": true,
+  "env": {
+   "CLAUDE_CODE_SESSION_ATTENDED": "0",
+   "ROUTING_SHOW_HEADLESS": "1"
+  },
+  "stdin": "{\"session_id\":\"s1\",\"source\":\"startup\"}",
+  "expect": {
+   "stdout_json": {
+    "systemMessage": "model-routing is off: Python 3 not found."
+   }
+  }
+ },
+ {
+  "name": "rs-2a no Python: prompt_hook",
+  "script": "prompt_hook",
+  "nopy": true,
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "UserPromptSubmit",
+   "prompt": "hi",
+   "permission_mode": "default",
+   "prompt_id": "p1"
+  },
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "rs-2b no Python: switch_guard",
+  "script": "switch_guard",
+  "nopy": true,
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PreModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "requested_model": "sonnet",
+   "source": "command",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "cache_ttl": "5m",
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "rs-3 no Python: routing_status",
+  "script": "routing_status",
+  "nopy": true,
+  "args": [
+   "--data",
+   "$T/data"
+  ],
+  "expect": {
+   "stdout_contains": [
+    "model-routing: Python 3 not found, so this command can't run."
+   ]
+  }
+ },
+ {
+  "name": "rs-3b no Python: routing_setup",
+  "script": "routing_setup",
+  "nopy": true,
+  "args": [
+   "--check"
+  ],
+  "expect": {
+   "stdout_contains": [
+    "model-routing: Python 3 not found, so this command can't run."
+   ]
+  }
+ },
+ {
+  "name": "rs-4 missing hook script: exit 0, no output (never exit 2)",
+  "script": "no_such_hook",
+  "stdin": {
+   "source": "startup"
+  },
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "rs-4b missing hook script, no Python: exit 0",
+  "script": "no_such_hook",
+  "nopy": true,
+  "stdin": {
+   "source": "startup"
+  },
+  "expect": {
+   "stdout_empty": true
+  }
+ }
+]

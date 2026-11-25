@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Carries out a settled implementation plan, or the rest of one, in a fresh context. Runs on Sonnet unless you pass another model (haiku for mechanical chunks, opus when the user wants it). Brief it with the plan, what's already done, file paths, constraints and how to verify. Not for open design questions.
+description: Carries out a settled plan, or one chunk of it, in a fresh context. Brief it with goal, files, decisions and how to verify. Not for open design.
 model: sonnet
 effort: medium
 ---

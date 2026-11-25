@@ -1,5 +1,5 @@
 {
   "name": "model-routing",
-  "version": "0.1.0",
-  "description": "Cheaper model switching in Claude Code: handoffs instead of full re-reads, a guard on expensive /model switches, and subagents that run other models without touching your session's cache."
+  "version": "2.0.0",
+  "description": "Shows where Claude Code routes models (startup line, per-turn receipts, /model-routing:status), helps keep the model mix on, and makes model switches cheaper."
 }

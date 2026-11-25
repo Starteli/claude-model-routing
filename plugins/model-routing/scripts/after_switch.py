@@ -1,52 +1,53 @@
 #!/usr/bin/env python3
 """PostModelSwitch hook.
 
-Switches you make with /model go through switch_guard.py first. This catches
-the ones Claude Code makes by itself, mainly opusplan entering plan mode, which
-re-sends the whole conversation to Opus. It can't stop them, so it just says
-what it cost and how to keep it small next time.
+Records the switch (main model, source, time) for prompt_hook, which decides
+the routing state at the next prompt. It never changes the mix lead.
 
-Config (settings.json "env"):
-  ROUTING_ASK_TOKENS  default 40000
-  ROUTING_ASK_USD     default 0.10
+Switches Claude Code makes by itself (source "auto") can't be stopped
+beforehand, so a big one gets one line saying what it cost.
+
+Config (settings.json "env"): ROUTING_ASK_TOKENS (40000), ROUTING_ASK_USD (0.10).
 """
-import json
 import os
-import sys
 
-
-def env_float(name, default):
-    try:
-        return float(os.environ.get(name, default))
-    except ValueError:
-        return float(default)
+import routing_lib as rl
 
 
 def main():
+    d = rl.read_stdin_json()
+    if d is None:
+        return
+    with rl.record_lock(sid=d.get("session_id")):
+        rec = rl.load_record(sid=d.get("session_id")) or rl.new_record(d.get("session_id"))
+        st = rec.get("state") if isinstance(rec.get("state"), dict) else None
+        if (not rec.get("lead") and not rec.get("lead_hint") and not rec.get("last_switch")
+                and d.get("from_model") and st and st.get("mode") == "LOCKED"
+                and rl.truthy(os.environ.get("CLAUDE_CODE_SUBAGENT_MODEL_FORCE"))):
+            # Lead unknown (SessionStart had no model): the first switch starts from it.
+            # The target is never the lead while FORCE stays set (§2.3).
+            rec["lead_hint"] = d.get("from_model")
+        if d.get("to_model"):
+            rec["main_model"] = d.get("to_model")
+        rec["last_switch"] = {"source": d.get("source"), "from": d.get("from_model"),
+                              "to": d.get("to_model"), "ts": rl.now()}
+        rl.save_record(rec)
+
+    if d.get("source") != "auto" or rl.canon(d.get("from_model")) == rl.canon(d.get("to_model")):
+        return
+    if not d.get("prompt_cache_warm") or not rl.attended():
+        return
     try:
-        data = json.load(sys.stdin)
-    except Exception:
-        return 0
-    if data.get("source") != "auto":
-        return 0
-    if data.get("from_model") == data.get("to_model") or not data.get("prompt_cache_warm"):
-        return 0
-    ctx = int(data.get("context_tokens") or 0)
-    usd = data.get("estimated_cache_write_usd")
-    priced = isinstance(usd, (int, float)) and data.get("pricing") in ("catalog", "configured")
-    if ctx < env_float("ROUTING_ASK_TOKENS", 40000) or (priced and usd < env_float("ROUTING_ASK_USD", 0.10)):
-        return 0
-    cost = f" (about ${usd:.2f})" if priced else ""
-    print(json.dumps({"systemMessage": (
-        f"Claude Code switched to {data.get('to_model')} by itself (plan mode or a "
-        f"fallback) and re-sent ~{ctx // 1000}K tokens{cost}. In a long session, "
-        f"run /compact before entering plan mode to keep this small."
-    )}))
-    return 0
+        ctx = int(d.get("context_tokens") or 0)
+    except (TypeError, ValueError):
+        return
+    usd, pricing = d.get("estimated_cache_write_usd"), d.get("pricing")
+    if ctx < rl.env_float("ROUTING_ASK_TOKENS", 40000):
+        return
+    if rl.priced(usd, pricing) and usd < rl.env_float("ROUTING_ASK_USD", 0.10):
+        return
+    rl.emit({"systemMessage": rl.lines.U13(d.get("to_model"), ctx // 1000, usd, pricing)})
 
 
 if __name__ == "__main__":
-    try:
-        sys.exit(main())
-    except Exception:
-        sys.exit(0)
+    rl.safe_main(main)

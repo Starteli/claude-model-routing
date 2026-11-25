@@ -1,0 +1,110 @@
+[
+ {
+  "name": "as-1 records the switch",
+  "script": "after_switch",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PostModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "source": "picker"
+  },
+  "expect": {
+   "stdout_empty": true,
+   "record": {
+    "main_model": "claude-sonnet-5",
+    "last_switch": {
+     "source": "picker",
+     "from": "claude-opus-5-5",
+     "to": "claude-sonnet-5",
+     "ts": "$RECENT"
+    }
+   }
+  }
+ },
+ {
+  "name": "as-2 auto, big and warm",
+  "script": "after_switch",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PostModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "source": "auto",
+   "context_tokens": 182340,
+   "prompt_cache_warm": true,
+   "estimated_cache_write_usd": 1.14,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Auto-switch to Sonnet 5 re-sent ~182K tokens (~$1.14) \u00b7 /compact first"
+   }
+  }
+ },
+ {
+  "name": "as-2b auto, small",
+  "script": "after_switch",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PostModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-sonnet-5",
+   "source": "auto",
+   "context_tokens": 1000,
+   "prompt_cache_warm": true
+  },
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "as-3 never moves the lead",
+  "script": "after_switch",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PostModelSwitch",
+   "from_model": "claude-opus-5-5",
+   "to_model": "claude-fable-5-2",
+   "source": "picker"
+  },
+  "expect": {
+   "record": {
+    "lead": "claude-opus-5-5",
+    "main_model": "claude-fable-5-2"
+   }
+  }
+ }
+]

@@ -1,6 +1,6 @@
 ---
 name: recall
-description: Finds specific details from earlier sessions in this project, such as decisions, error messages, commands or numbers, in handoff files and past transcripts, and returns only the matching excerpts. Use it instead of re-reading old conversations or asking the user to repeat themselves.
+description: Finds one detail from earlier sessions in this project (decision, error, command, number) in handoffs and transcripts; returns only excerpts.
 model: haiku
 effort: low
 omitClaudeMd: true
