@@ -4,10 +4,13 @@
 Turns on Claude Code's built-in "run the approved plan in a fresh session":
   "showClearContextOnPlanAccept": true   plan approval offers "Yes, clear context"
 
---executor sonnet (default) also sets
+--executor same (default) leaves your model alone, so plans run on whatever
+  model you're using, and removes "opusplan" if an earlier run set it.
+--executor sonnet also sets
   "model": "opusplan"                    Opus while planning, Sonnet while executing
---executor same leaves your model alone, so plans run on whatever model you're
-  using, and removes "opusplan" if an earlier run set it.
+  Warning: a pinned opusplan stops Claude Code's server-provided model mix
+  (a lead model with cheaper worker subagents, shown as its own row in /model),
+  because the mix only applies while the session model is its lead model.
 
 Backs up settings.json before writing. --check only reports what would change.
 """
@@ -24,7 +27,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--apply", action="store_true")
-    ap.add_argument("--executor", choices=["sonnet", "same"], default="sonnet")
+    ap.add_argument("--executor", choices=["sonnet", "same"], default="same")
     args = ap.parse_args()
 
     config_dir = Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")

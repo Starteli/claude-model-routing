@@ -25,8 +25,10 @@ Claude Code has this built in, but it's off by default. Run the setup once. It b
 
 | Command | Effect |
 |---|---|
-| `/model-routing:setup` | `"model": "opusplan"` (Opus plans, Sonnet executes) plus `"showClearContextOnPlanAccept": true` |
-| `/model-routing:setup same` | Only `"showClearContextOnPlanAccept": true`. Plans run on whatever model you're using |
+| `/model-routing:setup` | Only `"showClearContextOnPlanAccept": true`. Plans run on whatever model you're using, and an `opusplan` pin from an older setup is removed |
+| `/model-routing:setup sonnet` | Also pins `"model": "opusplan"` (Opus plans, Sonnet executes) |
+
+Pinning `opusplan` has a catch. If your account gets Claude Code's own model mix (a lead model with cheaper worker subagents, shown as its own row in `/model`), the mix only runs while your session model is its lead model, so `opusplan` switches it off. That's why the default no longer pins it.
 
 `showClearContextOnPlanAccept` makes plan approval offer **"Yes, clear context"**, which starts a fresh session that carries out just the approved plan.
 
@@ -106,7 +108,7 @@ claude plugin marketplace add Starteli/claude-model-routing
 claude plugin install model-routing@claude-routing
 ```
 
-3. In Claude Code, run `/model-routing:setup` once, or `/model-routing:setup same` to keep your own model for executing.
+3. In Claude Code, run `/model-routing:setup` once.
 
 To get updates later (then restart Claude Code):
 
