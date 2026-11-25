@@ -1,6 +1,6 @@
 ---
 name: deep-thinker
-description: Escalation for a hard design, architecture or debugging question when the current session runs a smaller model. Give it a self-contained brief (goal, exact question, file paths, what was tried); it does not see the conversation. Returns a recommendation, not edits.
+description: Second opinion on a hard design, architecture or debugging question. Give it a self-contained brief; it returns a recommendation, not edits.
 model: opus
 effort: high
 tools: Read, Grep, Glob, Bash

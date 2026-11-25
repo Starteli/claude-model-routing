@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """PostCompact hook (manual and auto).
 
-  - Every compaction: leaves a marker so the switch guard knows the context is
-    small now, even if the token count it's handed still reflects the old one.
+  - Every compaction: leaves a marker (${CLAUDE_PLUGIN_DATA}/compacted/<session_id>)
+    so the switch guard knows the context is small now, even if the token count
+    it's handed still reflects the old one.
   - Manual /compact: also saves the summary as .handoff/LATEST.md (archived,
     kept out of git), so the state survives on disk for other tools and the
     recall agent.
@@ -11,13 +12,13 @@ Config (settings.json "env"):
   ROUTING_SAVE_COMPACT  0 = don't save /compact summaries to .handoff (default 1)
   ROUTING_HANDOFF_DIR   default .handoff
 """
-import json
 import os
 import re
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
+
+import routing_lib as rl
 
 
 def clean(summary):
@@ -31,20 +32,22 @@ def clean(summary):
 
 
 def marker_path(session_id):
-    return Path(tempfile.gettempdir()) / "claude-model-routing" / f"{session_id}.compacted"
+    return Path(rl.compacted_path(session_id))
 
 
 def main():
-    try:
-        data = json.load(sys.stdin)
-    except Exception:
+    data = rl.read_stdin_json()
+    if data is None:
         return 0
 
     session_id = data.get("session_id") or ""
     if session_id:
-        marker = marker_path(session_id)
-        marker.parent.mkdir(parents=True, exist_ok=True)
-        marker.write_text(str(data.get("trigger") or ""))
+        try:
+            marker = marker_path(session_id)
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_text(str(data.get("trigger") or ""))
+        except OSError:
+            pass
 
     summary = clean(data.get("compact_summary") or "")
     if data.get("trigger") != "manual" or not summary:

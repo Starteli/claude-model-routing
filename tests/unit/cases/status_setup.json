@@ -1,0 +1,1598 @@
+[
+ {
+  "name": "st-1 LOCKED mix record",
+  "script": "routing_status",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": "Opus + Sonnet",
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": "medium",
+   "totals": {
+    "claude-haiku-5-5": 3,
+    "fork:claude-opus-5-5": 1
+   }
+  },
+  "args": [
+   "--data",
+   "$T/data",
+   "--session",
+   "s1"
+  ],
+  "expect": {
+   "line_count": 6,
+   "lines_startwith": [
+    [
+     0,
+     "Model routing"
+    ],
+    [
+     1,
+     "1. Subagents: forced to Sonnet 5 \u00b7 by the model mix (\"Opus + Sonnet\")"
+    ],
+    [
+     2,
+     "2. Main model: Opus 5.5 (mix lead) \u00b7 effort medium"
+    ],
+    [
+     3,
+     "3. This session: 4 runs \u00b7 3\u00d7 Haiku 5.5 \u00b7 1\u00d7 Opus 5.5 fork"
+    ],
+    [
+     4,
+     "4. Problems: none"
+    ],
+    [
+     5,
+     "Commands: /model-routing:escalate \u00b7 execute \u00b7 handoff \u00b7 setup"
+    ]
+   ]
+  }
+ },
+ {
+  "name": "st-1b env scrubbed: falls back to the record",
+  "script": "routing_status",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": "Opus + Sonnet",
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": "medium",
+   "totals": {
+    "claude-haiku-5-5": 3,
+    "fork:claude-opus-5-5": 1
+   }
+  },
+  "args": [
+   "--data",
+   "$T/data",
+   "--session",
+   "s1"
+  ],
+  "expect": {
+   "lines_startwith": [
+    [
+     1,
+     "1. Subagents: forced to Sonnet 5 \u00b7 by the model mix"
+    ]
+   ]
+  }
+ },
+ {
+  "name": "st-1c found by session id without CLAUDE_PID",
+  "script": "routing_status",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
+   "CLAUDE_PID": null
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": "Opus + Sonnet",
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": "medium",
+   "totals": {
+    "claude-haiku-5-5": 3,
+    "fork:claude-opus-5-5": 1
+   }
+  },
+  "args": [
+   "--data",
+   "$T/data",
+   "--session",
+   "s1"
+  ],
+  "expect": {
+   "lines_startwith": [
+    [
+     3,
+     "3. This session: 4 runs"
+    ]
+   ],
+   "stdout_not_contains": [
+    "no hook data"
+   ]
+  }
+ },
+ {
+  "name": "st-1d OPEN",
+  "script": "routing_status",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-sonnet-5",
+   "lead": null,
+   "state": {
+    "mode": "OPEN",
+    "worker": null,
+    "default_worker": null,
+    "origin": null,
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "args": [
+   "--data",
+   "$T/data",
+   "--session",
+   "s1"
+  ],
+  "expect": {
+   "lines_startwith": [
+    [
+     1,
+     "1. Subagents: picked per task \u00b7 recall Haiku \u00b7 build Sonnet \u00b7 hard Opus"
+    ],
+    [
+     2,
+     "2. Main model: Sonnet 5"
+    ],
+    [
+     3,
+     "3. This session: no subagent runs yet"
+    ]
+   ]
+  }
+ },
+ {
+  "name": "st-1e orphan and problems",
+  "script": "routing_status",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
+   "CLAUDE_CODE_EFFORT_LEVEL": "high"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-sonnet-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "files": {
+   "config/settings.json": {
+    "model": "opusplan"
+   }
+  },
+  "args": [
+   "--data",
+   "$T/data",
+   "--session",
+   "s1"
+  ],
+  "expect": {
+   "lines_startwith": [
+    [
+     2,
+     "2. Main model: Sonnet 5 \u00b7 mix lead is Opus 5.5 (subagents still forced)"
+    ],
+    [
+     4,
+     "4. Problems:"
+    ]
+   ],
+   "stdout_contains": [
+    "   - mix half-on: main Sonnet 5, subagents still Sonnet 5 \u00b7 fix: /model \u2192 the mix row",
+    "   - CLAUDE_CODE_EFFORT_LEVEL fixes every effort \u00b7 fix: unset it in your shell",
+    "   - opusplan pin in user settings \u00b7 fix: /model-routing:setup"
+   ]
+  }
+ },
+ {
+  "name": "st-1f launch origin problem",
+  "script": "routing_status",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "launch": "CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": null,
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "launch",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "args": [
+   "--data",
+   "$T/data",
+   "--session",
+   "s1"
+  ],
+  "expect": {
+   "stdout_contains": [
+    "1. Subagents: forced to Sonnet 5 \u00b7 set at launch",
+    "   - CLAUDE_CODE_SUBAGENT_MODEL* set before launch \u00b7 fix: unset in shell profile or parent"
+   ]
+  }
+ },
+ {
+  "name": "st-2 no record",
+  "script": "routing_status",
+  "args": [
+   "--data",
+   "$T/data",
+   "--session",
+   "s1"
+  ],
+  "expect": {
+   "stdout_contains": [
+    "4. Problems:",
+    "no hook data yet"
+   ],
+   "lines_startwith": [
+    [
+     0,
+     "Model routing"
+    ]
+   ]
+  }
+ },
+ {
+  "name": "st-3 --brief LOCKED",
+  "script": "routing_status",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": null,
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "args": [
+   "--brief",
+   "--data",
+   "$T/data"
+  ],
+  "expect": {
+   "line_count": 1,
+   "stdout_startswith": "Routing: LOCKED",
+   "stdout_contains": [
+    "Routing: LOCKED \u00b7 subagents forced to claude-sonnet-5 (Sonnet 5) \u00b7 main claude-opus-5-5 (Opus 5.5)"
+   ]
+  }
+ },
+ {
+  "name": "st-3b --brief OPEN",
+  "script": "routing_status",
+  "args": [
+   "--brief",
+   "--data",
+   "$T/data"
+  ],
+  "expect": {
+   "line_count": 1,
+   "stdout_contains": [
+    "Routing: OPEN"
+   ]
+  }
+ },
+ {
+  "name": "st-4 bad args still exit 0",
+  "script": "routing_status",
+  "args": [
+   "--bogus"
+  ],
+  "expect": {
+   "stdout_contains": [
+    "Model routing"
+   ]
+  }
+ },
+ {
+  "name": "su-1 check",
+  "script": "routing_setup",
+  "files": {
+   "config/settings.json": {
+    "model": "opusplan"
+   },
+   "project/.claude/settings.local.json": {
+    "env": {
+     "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1"
+    }
+   }
+  },
+  "args": [
+   "--check",
+   "--data",
+   "$T/data"
+  ],
+  "expect": {
+   "lines_startwith": [
+    [
+     0,
+     "Model routing check"
+    ],
+    [
+     1,
+     "1. User settings pin \"model\": \"opusplan\" (left by model-routing v1)."
+    ],
+    [
+     2,
+     "2. Local settings set CLAUDE_CODE_SUBAGENT_MODEL_FORCE (not in effect this session). It can block any model mix. Fix: remove it."
+    ],
+    [
+     3,
+     "3. Plans don't offer \"Yes, clear context\". Fix: turn on showClearContextOnPlanAccept."
+    ]
+   ],
+   "stdout_contains": [
+    "Not checked: --settings flags, admin (MDM/server) settings, shell exports."
+   ]
+  }
+ },
+ {
+  "name": "su-1b check: in effect",
+  "script": "routing_setup",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1"
+  },
+  "files": {
+   "project/.claude/settings.local.json": {
+    "env": {
+     "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1"
+    }
+   }
+  },
+  "args": [
+   "--check"
+  ],
+  "expect": {
+   "stdout_contains": [
+    "1. Local settings set CLAUDE_CODE_SUBAGENT_MODEL_FORCE (in effect)."
+   ]
+  }
+ },
+ {
+  "name": "su-1c check: project file shared with team, all checks",
+  "script": "routing_setup",
+  "files": {
+   "project/.claude/settings.json": {
+    "model": "opus",
+    "agent": "model-routing:implementer",
+    "env": {
+     "ANTHROPIC_MODEL": "x",
+     "CLAUDE_CODE_EFFORT_LEVEL": "high",
+     "CLAUDE_CODE_SIMPLE": "1"
+    },
+    "modelPicker": {
+     "replaceBuiltInOptions": true
+    }
+   },
+   "config/settings.json": {
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "args": [
+   "--check"
+  ],
+  "expect": {
+   "lines_startwith": [
+    [
+     1,
+     "1. Project settings pin the model to Opus (\"model\": \"opus\"; shared with your team). If /model shows a mix row led by another model, remove it. Fix: remove it (only if you pick this number)."
+    ],
+    [
+     2,
+     "2. Project settings set ANTHROPIC_MODEL (shared with your team)."
+    ],
+    [
+     3,
+     "3. Project settings set CLAUDE_CODE_EFFORT_LEVEL (shared with your team)."
+    ],
+    [
+     4,
+     "4. Project settings set \"agent\": \"model-routing:implementer\" (shared with your team)."
+    ]
+   ],
+   "stdout_contains": [
+    "Info: Project settings set CLAUDE_CODE_SIMPLE.",
+    "Info: Project settings set modelPicker.replaceBuiltInOptions, which hides the mix row."
+   ],
+   "stdout_not_contains": [
+    "5.",
+    "showClearContextOnPlanAccept"
+   ]
+  }
+ },
+ {
+  "name": "su-1d check: nothing to fix",
+  "script": "routing_setup",
+  "files": {
+   "config/settings.json": {
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "args": [
+   "--check"
+  ],
+  "expect": {
+   "stdout_contains": [
+    "Nothing to fix."
+   ]
+  }
+ },
+ {
+  "name": "su-2 apply 1",
+  "script": "routing_setup",
+  "env": {
+   "ROUTING_TEST_LOCAL": "1",
+   "CLAUDE_CODE_REMOTE": "true"
+  },
+  "files": {
+   "config/settings.json": {
+    "model": "opusplan",
+    "theme": "dark",
+    "env": {
+     "X": "1"
+    }
+   }
+  },
+  "args": [
+   "--apply",
+   "1",
+   "--data",
+   "$T/data"
+  ],
+  "expect": {
+   "file_json_absent_keys": {
+    "config/settings.json": [
+     "model",
+     "showClearContextOnPlanAccept"
+    ]
+   },
+   "file_json": {
+    "config/settings.json": {
+     "theme": "dark",
+     "env": {
+      "X": "1"
+     }
+    }
+   },
+   "glob_exists": [
+    "config/settings.json.bak-*"
+   ],
+   "stdout_contains": [
+    "Removed \"model\" from"
+   ]
+  }
+ },
+ {
+  "name": "su-2b apply all (model pin other than opusplan kept)",
+  "script": "routing_setup",
+  "env": {
+   "ROUTING_TEST_LOCAL": "1"
+  },
+  "files": {
+   "project/.claude/settings.local.json": {
+    "model": "opus",
+    "env": {
+     "claude_code_subagent_model": "haiku",
+     "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+     "KEEP": "1"
+    }
+   }
+  },
+  "args": [
+   "--apply",
+   "all"
+  ],
+  "expect": {
+   "file_json": {
+    "project/.claude/settings.local.json": {
+     "model": "opus",
+     "env": {
+      "KEEP": "1"
+     }
+    },
+    "config/settings.json": {
+     "showClearContextOnPlanAccept": true
+    }
+   },
+   "file_json_absent_keys": {
+    "project/.claude/settings.local.json": [
+     "env.claude_code_subagent_model",
+     "env.CLAUDE_CODE_SUBAGENT_MODEL_FORCE"
+    ]
+   },
+   "glob_absent": [
+    "config/settings.json.bak-*"
+   ]
+  }
+ },
+ {
+  "name": "su-3 cloud session writes nothing",
+  "script": "routing_setup",
+  "env": {
+   "CLAUDE_CODE_REMOTE": "true"
+  },
+  "files": {
+   "config/settings.json": "{\"model\": \"opusplan\"}"
+  },
+  "args": [
+   "--apply",
+   "all",
+   "--data",
+   "$T/data"
+  ],
+  "expect": {
+   "stdout_contains": [
+    "Cloud session: settings here are temporary, so nothing was written. Add the plugin at claude.ai/customize/plugins."
+   ],
+   "file_equals": {
+    "config/settings.json": "{\"model\": \"opusplan\"}"
+   },
+   "glob_absent": [
+    "config/settings.json.bak-*"
+   ]
+  }
+ },
+ {
+  "name": "su-4 managed is info only",
+  "script": "routing_setup",
+  "files": {
+   "managed/managed-settings.json": {
+    "env": {
+     "ANTHROPIC_MODEL": "x"
+    }
+   },
+   "config/settings.json": {
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "args": [
+   "--check"
+  ],
+  "expect": {
+   "stdout_contains": [
+    "Info: managed settings set ANTHROPIC_MODEL. Ask your admin.",
+    "Nothing to fix."
+   ],
+   "stdout_not_contains": [
+    "1. "
+   ]
+  }
+ },
+ {
+  "name": "su-4b managed never written",
+  "script": "routing_setup",
+  "env": {
+   "ROUTING_TEST_LOCAL": "1"
+  },
+  "files": {
+   "managed/managed-settings.d/x.json": "{\"model\": \"opusplan\"}"
+  },
+  "args": [
+   "--apply",
+   "all"
+  ],
+  "expect": {
+   "file_equals": {
+    "managed/managed-settings.d/x.json": "{\"model\": \"opusplan\"}"
+   }
+  }
+ },
+ {
+  "name": "su-5 invalid project JSON",
+  "script": "routing_setup",
+  "env": {
+   "ROUTING_TEST_LOCAL": "1"
+  },
+  "files": {
+   "project/.claude/settings.json": "{bad"
+  },
+  "steps": [
+   {
+    "args": [
+     "--check"
+    ],
+    "expect": {
+     "stdout_contains": [
+      "Info: Project settings (.claude/settings.json) is not valid JSON at line 1, column 2. Fix it by hand; it was not changed."
+     ],
+     "stdout_not_contains": [
+      "$T"
+     ]
+    }
+   },
+   {
+    "args": [
+     "--apply",
+     "all"
+    ],
+    "expect": {
+     "file_equals": {
+      "project/.claude/settings.json": "{bad"
+     },
+     "glob_absent": [
+      "project/.claude/settings.json.bak-*"
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "name": "su-6 launch vars from the record",
+  "script": "routing_setup",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "launch",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "args": [
+   "--check",
+   "--data",
+   "$T/data"
+  ],
+  "expect": {
+   "stdout_contains": [
+    "Info: CLAUDE_CODE_SUBAGENT_MODEL or _FORCE was set before Claude Code started (a shell export, or a parent Claude session). Unset it there."
+   ]
+  }
+ },
+ {
+  "name": "su-7 bad numbers",
+  "script": "routing_setup",
+  "env": {
+   "ROUTING_TEST_LOCAL": "1"
+  },
+  "args": [
+   "--apply",
+   "7,x"
+  ],
+  "expect": {
+   "stdout_contains": [
+    "Skipped 7",
+    "Skipped 'x'",
+    "Nothing changed."
+   ]
+  }
+ },
+ {
+  "name": "su-7 Bash env has no CLAUDE_PROJECT_DIR: --project finds the project from a subdir",
+  "script": "routing_setup",
+  "env": {
+   "CLAUDE_PROJECT_DIR": null
+  },
+  "cwd": "project/sub",
+  "dirs": [
+   "project/sub/.claude"
+  ],
+  "files": {
+   "project/.claude/settings.local.json": {
+    "model": "opusplan"
+   },
+   "config/settings.json": {
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "args": [
+   "--check",
+   "--data",
+   "$T/data",
+   "--project",
+   "$T/project"
+  ],
+  "expect": {
+   "lines_startwith": [
+    [
+     1,
+     "1. Local settings pin \"model\": \"opusplan\""
+    ]
+   ]
+  }
+ },
+ {
+  "name": "su-7b no --project, no CLAUDE_PROJECT_DIR: git top level, not the cwd",
+  "script": "routing_setup",
+  "env": {
+   "CLAUDE_PROJECT_DIR": null
+  },
+  "cwd": "project/sub",
+  "git_init": [
+   "project"
+  ],
+  "dirs": [
+   "project/sub"
+  ],
+  "files": {
+   "project/.claude/settings.local.json": {
+    "model": "opusplan"
+   },
+   "config/settings.json": {
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "args": [
+   "--check",
+   "--data",
+   "$T/data"
+  ],
+  "expect": {
+   "lines_startwith": [
+    [
+     1,
+     "1. Local settings pin \"model\": \"opusplan\""
+    ]
+   ]
+  }
+ },
+ {
+  "name": "su-7c unsubstituted --project placeholder is ignored",
+  "script": "routing_setup",
+  "env": {
+   "CLAUDE_PROJECT_DIR": null
+  },
+  "cwd": "project",
+  "files": {
+   "project/.claude/settings.local.json": {
+    "model": "opusplan"
+   },
+   "config/settings.json": {
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "args": [
+   "--check",
+   "--project",
+   "${CLAUDE_PROJECT_DIR}"
+  ],
+  "expect": {
+   "lines_startwith": [
+    [
+     1,
+     "1. Local settings pin \"model\": \"opusplan\""
+    ]
+   ]
+  }
+ },
+ {
+  "name": "su-8 --apply refuses when the numbered list differs from the check the user saw",
+  "script": "routing_setup",
+  "env": {
+   "CLAUDE_PROJECT_DIR": null,
+   "ROUTING_TEST_LOCAL": "1"
+  },
+  "files": {
+   "project/.claude/settings.local.json": {
+    "model": "opusplan"
+   },
+   "project/sub/.claude/settings.local.json": {
+    "env": {
+     "ANTHROPIC_MODEL": "x"
+    }
+   },
+   "config/settings.json": {
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "steps": [
+   {
+    "args": [
+     "--check",
+     "--data",
+     "$T/data",
+     "--project",
+     "$T/project"
+    ],
+    "expect": {
+     "lines_startwith": [
+      [
+       1,
+       "1. Local settings pin \"model\": \"opusplan\""
+      ]
+     ]
+    }
+   },
+   {
+    "args": [
+     "--apply",
+     "1",
+     "--data",
+     "$T/data",
+     "--project",
+     "$T/project/sub"
+    ],
+    "expect": {
+     "stdout_contains": [
+      "Settings changed since the check, so nothing was written."
+     ],
+     "file_json": {
+      "project/sub/.claude/settings.local.json": {
+       "env": {
+        "ANTHROPIC_MODEL": "x"
+       }
+      },
+      "project/.claude/settings.local.json": {
+       "model": "opusplan"
+      }
+     }
+    }
+   },
+   {
+    "args": [
+     "--apply",
+     "1",
+     "--data",
+     "$T/data",
+     "--project",
+     "$T/project"
+    ],
+    "expect": {
+     "stdout_contains": [
+      "Removed \"model\" from local settings (.claude/settings.local.json)"
+     ],
+     "file_json_absent_keys": {
+      "project/.claude/settings.local.json": [
+       "model"
+      ]
+     }
+    }
+   }
+  ]
+ },
+ {
+  "name": "su-9 third-party provider: model env vars are info only and survive 'all'",
+  "script": "routing_setup",
+  "env": {
+   "ROUTING_TEST_LOCAL": "1",
+   "CLAUDE_CODE_USE_BEDROCK": "1"
+  },
+  "files": {
+   "config/settings.json": {
+    "env": {
+     "ANTHROPIC_MODEL": "arn:aws:bedrock:x",
+     "CLAUDE_CODE_SUBAGENT_MODEL": "arn:aws:bedrock:h"
+    },
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "steps": [
+   {
+    "args": [
+     "--check",
+     "--data",
+     "$T/data"
+    ],
+    "expect": {
+     "stdout_contains": [
+      "Nothing to fix.",
+      "Info: User settings set CLAUDE_CODE_SUBAGENT_MODEL. You use a third-party provider",
+      "Info: User settings set ANTHROPIC_MODEL. You use a third-party provider"
+     ],
+     "stdout_not_contains": [
+      "1. "
+     ]
+    }
+   },
+   {
+    "args": [
+     "--apply",
+     "all",
+     "--data",
+     "$T/data"
+    ],
+    "expect": {
+     "file_json": {
+      "config/settings.json": {
+       "env": {
+        "ANTHROPIC_MODEL": "arn:aws:bedrock:x",
+        "CLAUDE_CODE_SUBAGENT_MODEL": "arn:aws:bedrock:h"
+       }
+      }
+     }
+    }
+   }
+  ]
+ },
+ {
+  "name": "su-9b ANTHROPIC_MODEL is offered by number but not part of 'all'",
+  "script": "routing_setup",
+  "env": {
+   "ROUTING_TEST_LOCAL": "1"
+  },
+  "files": {
+   "config/settings.json": {
+    "env": {
+     "ANTHROPIC_MODEL": "claude-opus-5-5"
+    },
+    "model": "opusplan"
+   }
+  },
+  "steps": [
+   {
+    "args": [
+     "--check",
+     "--data",
+     "$T/data"
+    ],
+    "expect": {
+     "lines_startwith": [
+      [
+       2,
+       "2. User settings set ANTHROPIC_MODEL."
+      ]
+     ],
+     "stdout_contains": [
+      "Fix: remove it (only if you pick this number)."
+     ]
+    }
+   },
+   {
+    "args": [
+     "--apply",
+     "all",
+     "--data",
+     "$T/data"
+    ],
+    "expect": {
+     "file_json": {
+      "config/settings.json": {
+       "env": {
+        "ANTHROPIC_MODEL": "claude-opus-5-5"
+       },
+       "showClearContextOnPlanAccept": true
+      }
+     },
+     "file_json_absent_keys": {
+      "config/settings.json": [
+       "model"
+      ]
+     },
+     "stdout_contains": [
+      "Removed \"model\" from user settings (~/config/settings.json)",
+      "Turned on \"Yes, clear context\" for plans (user settings)"
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "name": "su-10 symlinked settings file: target fixed, link and mode kept, unique backups",
+  "script": "routing_setup",
+  "env": {
+   "ROUTING_TEST_LOCAL": "1"
+  },
+  "files": {
+   "dotfiles/settings.json": {
+    "model": "opusplan",
+    "theme": "dark",
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "symlinks": {
+   "config/settings.json": "dotfiles/settings.json"
+  },
+  "chmod": {
+   "dotfiles/settings.json": "644"
+  },
+  "args": [
+   "--apply",
+   "1",
+   "--data",
+   "$T/data"
+  ],
+  "expect": {
+   "is_symlink": [
+    "config/settings.json"
+   ],
+   "file_mode": {
+    "dotfiles/settings.json": "644"
+   },
+   "file_json": {
+    "dotfiles/settings.json": {
+     "theme": "dark"
+    }
+   },
+   "file_json_absent_keys": {
+    "dotfiles/settings.json": [
+     "model"
+    ]
+   },
+   "glob_exists": [
+    "dotfiles/settings.json.bak-*"
+   ]
+  }
+ },
+ {
+  "name": "st-4 status hints: managed -> ask your admin, report-only -> by hand, bad JSON -> edit by hand",
+  "script": "routing_status",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": null,
+   "state": {
+    "mode": "OPEN",
+    "worker": null,
+    "default_worker": null,
+    "origin": null,
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "files": {
+   "managed/managed-settings.json": {
+    "env": {
+     "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+     "ANTHROPIC_MODEL": "x"
+    }
+   },
+   "project/.claude/settings.json": {
+    "modelPicker": {
+     "replaceBuiltInOptions": true
+    }
+   },
+   "project/.claude/settings.local.json": "{bad",
+   "config/settings.json": {
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "args": [
+   "--data",
+   "$T/data",
+   "--session",
+   "s1"
+  ],
+  "expect": {
+   "stdout_contains": [
+    "   - managed settings force subagents \u00b7 ask your admin",
+    "   - managed ANTHROPIC_MODEL \u00b7 ask your admin",
+    "   - modelPicker.replaceBuiltInOptions hides the mix row (project settings) \u00b7 fix: remove it by hand",
+    "   - local settings file is not valid JSON \u00b7 fix: edit it by hand"
+   ],
+   "stdout_not_contains": [
+    "$T",
+    "managed settings force subagents \u00b7 fix: /model-routing:setup"
+   ]
+  }
+ },
+ {
+  "name": "st-5 OPEN with an exported SUBAGENT_MODEL: others <W> and a mix-blocker problem",
+  "script": "routing_status",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL": "haiku"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": null,
+   "state": {
+    "mode": "OPEN",
+    "worker": null,
+    "default_worker": "haiku",
+    "origin": null,
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "files": {
+   "config/settings.json": {
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "args": [
+   "--data",
+   "$T/data",
+   "--session",
+   "s1"
+  ],
+  "expect": {
+   "lines_startwith": [
+    [
+     1,
+     "1. Subagents: picked per task \u00b7 recall Haiku \u00b7 build Sonnet \u00b7 hard Opus \u00b7 others Haiku"
+    ]
+   ],
+   "stdout_contains": [
+    "   - CLAUDE_CODE_SUBAGENT_MODEL blocks a model mix \u00b7 fix: unset it in your shell"
+   ]
+  }
+ },
+ {
+  "name": "st-6 origin unknown: no '(mix lead)', line 1 says what it may be",
+  "script": "routing_status",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "unknown",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "files": {
+   "config/settings.json": {
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "args": [
+   "--data",
+   "$T/data",
+   "--session",
+   "s1"
+  ],
+  "expect": {
+   "lines_startwith": [
+    [
+     1,
+     "1. Subagents: forced to Sonnet 5 \u00b7 source unknown (model mix or an env setting)"
+    ],
+    [
+     2,
+     "2. Main model: Opus 5.5"
+    ]
+   ],
+   "stdout_not_contains": [
+    "(mix lead)"
+   ]
+  }
+ },
+ {
+  "name": "st-7 managed origin: set by your admin",
+  "script": "routing_status",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "settings:managed",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "files": {
+   "config/settings.json": {
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "args": [
+   "--data",
+   "$T/data",
+   "--session",
+   "s1"
+  ],
+  "expect": {
+   "lines_startwith": [
+    [
+     1,
+     "1. Subagents: forced to Sonnet 5 \u00b7 set by your admin"
+    ]
+   ]
+  }
+ },
+ {
+  "name": "st-8 main model unknown to hooks (-p): shown from the session transcript",
+  "script": "routing_status",
+  "env": {
+   "CLAUDE_PROJECT_DIR": null
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": {
+    "mode": "OPEN",
+    "worker": null,
+    "default_worker": null,
+    "origin": null,
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "files": {
+   "config/projects/-x-proj/s1.jsonl": "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":\"hi\"}}\n{\"type\":\"assistant\",\"isSidechain\":false,\"message\":{\"model\":\"claude-sonnet-5\",\"content\":[]}}\n",
+   "config/settings.json": {
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "args": [
+   "--data",
+   "$T/data",
+   "--session",
+   "s1",
+   "--project",
+   "$T/project"
+  ],
+  "expect": {
+   "lines_startwith": [
+    [
+     2,
+     "2. Main model: Sonnet 5"
+    ]
+   ]
+  }
+ },
+ {
+  "name": "st-9 status output encodes as UTF-8 even when the locale is cp1252",
+  "script": "routing_status",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-haiku-5-5",
+   "PYTHONIOENCODING": "cp1252"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-sonnet-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-haiku-5-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "files": {
+   "config/settings.json": {
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "args": [
+   "--data",
+   "$T/data",
+   "--session",
+   "s1"
+  ],
+  "expect": {
+   "stdout_contains": [
+    "fix: /model \u2192 the mix row",
+    "Subagents: forced to Haiku 5.5"
+   ],
+   "stdout_not_contains": [
+    "status failed"
+   ]
+  }
+ },
+ {
+  "name": "st-10 orphan with origin unknown: neutral problem line",
+  "script": "routing_status",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-haiku-5-5"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-sonnet-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-haiku-5-5",
+    "default_worker": null,
+    "origin": "unknown",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "files": {
+   "config/settings.json": {
+    "showClearContextOnPlanAccept": true
+   }
+  },
+  "args": [
+   "--data",
+   "$T/data",
+   "--session",
+   "s1"
+  ],
+  "expect": {
+   "lines_startwith": [
+    [
+     2,
+     "2. Main model: Sonnet 5 \u00b7 started on Opus 5.5 (subagents still forced)"
+    ]
+   ],
+   "stdout_contains": [
+    "   - main changed to Sonnet 5, subagents still Haiku 5.5 \u00b7 if a model mix: /model \u2192 its row"
+   ]
+  }
+ }
+]

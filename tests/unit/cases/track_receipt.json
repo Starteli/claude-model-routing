@@ -1,0 +1,909 @@
+[
+ {
+  "name": "ta-1 background Agent",
+  "script": "track_agent",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PostToolUse",
+   "tool_name": "Agent",
+   "prompt_id": "p1",
+   "tool_input": {
+    "subagent_type": "general-purpose",
+    "effort": "low",
+    "prompt": "x",
+    "description": "d"
+   },
+   "tool_response": {
+    "status": "async_launched",
+    "resolvedModel": "claude-haiku-5-5",
+    "agentId": "a1"
+   }
+  },
+  "expect": {
+   "stdout_empty": true,
+   "receipts": [
+    {
+     "p": "p1",
+     "m": "claude-haiku-5-5",
+     "e": "low",
+     "k": "bg"
+    }
+   ]
+  }
+ },
+ {
+  "name": "ta-2 frontmatter effort",
+  "script": "track_agent",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PostToolUse",
+   "tool_name": "Agent",
+   "prompt_id": "p1",
+   "tool_input": {
+    "subagent_type": "model-routing:recall",
+    "prompt": "x",
+    "description": "d"
+   },
+   "tool_response": {
+    "status": "completed",
+    "agentId": "a3"
+   }
+  },
+  "expect": {
+   "stdout_empty": true,
+   "receipts": [
+    {
+     "p": "p1",
+     "e": "low",
+     "k": "fg",
+     "a": "model-routing:recall"
+    }
+   ]
+  }
+ },
+ {
+  "name": "ta-2b no resolvedModel, OPEN: frontmatter model",
+  "script": "track_agent",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PostToolUse",
+   "tool_name": "Agent",
+   "prompt_id": "p1",
+   "tool_input": {
+    "subagent_type": "model-routing:recall",
+    "prompt": "x",
+    "description": "d"
+   },
+   "tool_response": {
+    "status": "completed",
+    "agentId": "a3"
+   }
+  },
+  "expect": {
+   "receipts": [
+    {
+     "m": "haiku"
+    }
+   ]
+  }
+ },
+ {
+  "name": "ta-2c no resolvedModel, LOCKED: forced worker",
+  "script": "track_agent",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PostToolUse",
+   "tool_name": "Agent",
+   "prompt_id": "p1",
+   "tool_input": {
+    "subagent_type": "model-routing:recall",
+    "prompt": "x",
+    "description": "d"
+   },
+   "tool_response": {
+    "status": "completed",
+    "agentId": "a3"
+   }
+  },
+  "expect": {
+   "receipts": [
+    {
+     "m": "claude-sonnet-5"
+    }
+   ]
+  }
+ },
+ {
+  "name": "ta-3 forked think skill",
+  "script": "track_agent",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": null,
+   "state": null,
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PostToolUse",
+   "tool_name": "Skill",
+   "prompt_id": "p1",
+   "tool_input": {
+    "skill": "model-routing:think",
+    "args": "q"
+   },
+   "tool_response": {
+    "status": "forked",
+    "agentId": "a2"
+   }
+  },
+  "expect": {
+   "stdout_empty": true,
+   "receipts": [
+    {
+     "p": "p1",
+     "m": "claude-opus-5-5",
+     "e": "high",
+     "k": "fork"
+    }
+   ]
+  }
+ },
+ {
+  "name": "ta-4 inline Skill",
+  "script": "track_agent",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PostToolUse",
+   "tool_name": "Skill",
+   "prompt_id": "p1",
+   "tool_input": {
+    "skill": "model-routing:think",
+    "args": "q"
+   },
+   "tool_response": {
+    "status": "completed"
+   }
+  },
+  "expect": {
+   "stdout_empty": true,
+   "files_absent": [
+    "data/receipts/$KEY.jsonl"
+   ]
+  }
+ },
+ {
+  "name": "ta-5 other tool",
+  "script": "track_agent",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "PostToolUse",
+   "tool_name": "Bash",
+   "prompt_id": "p1",
+   "tool_input": {
+    "subagent_type": "general-purpose",
+    "effort": "low",
+    "prompt": "x",
+    "description": "d"
+   },
+   "tool_response": {
+    "status": "async_launched",
+    "resolvedModel": "claude-haiku-5-5",
+    "agentId": "a1"
+   }
+  },
+  "expect": {
+   "files_absent": [
+    "data/receipts/$KEY.jsonl"
+   ]
+  }
+ },
+ {
+  "name": "rc-1 receipt",
+  "script": "receipt",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": null,
+   "state": null,
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {
+    "claude-haiku-5-5": 1
+   }
+  },
+  "receipts_pre": [
+   {
+    "p": "p1",
+    "m": "claude-haiku-5-5",
+    "e": "low",
+    "k": "bg",
+    "a": "general-purpose"
+   },
+   {
+    "p": "p1",
+    "m": "claude-haiku-5-5",
+    "e": "low",
+    "k": "bg",
+    "a": "general-purpose"
+   },
+   {
+    "p": "p1",
+    "m": "claude-opus-5-5",
+    "e": "high",
+    "k": "fork",
+    "a": "model-routing:think"
+   }
+  ],
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "Stop",
+   "prompt_id": "p1",
+   "effort": {
+    "level": "medium"
+   }
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Routed: 2\u00d7 Haiku 5.5 (low) | 1\u00d7 Opus 5.5 fork (high)"
+   },
+   "files_absent": [
+    "data/receipts/$KEY.jsonl"
+   ],
+   "record": {
+    "totals": {
+     "claude-haiku-5-5": 3,
+     "fork:claude-opus-5-5": 1
+    },
+    "session_effort": "medium"
+   }
+  }
+ },
+ {
+  "name": "rc-1b receipt end to end (track_agent x3, then Stop)",
+  "script": "track_agent",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": null,
+   "state": null,
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "steps": [
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "PostToolUse",
+     "tool_name": "Agent",
+     "prompt_id": "p1",
+     "tool_input": {
+      "subagent_type": "general-purpose",
+      "effort": "low",
+      "prompt": "x",
+      "description": "d"
+     },
+     "tool_response": {
+      "status": "async_launched",
+      "resolvedModel": "claude-haiku-5-5",
+      "agentId": "a1"
+     }
+    },
+    "expect": {
+     "stdout_empty": true
+    }
+   },
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "PostToolUse",
+     "tool_name": "Agent",
+     "prompt_id": "p1",
+     "tool_input": {
+      "subagent_type": "general-purpose",
+      "effort": "low",
+      "prompt": "x",
+      "description": "d"
+     },
+     "tool_response": {
+      "status": "async_launched",
+      "resolvedModel": "claude-haiku-5-5",
+      "agentId": "a1"
+     }
+    },
+    "expect": {
+     "stdout_empty": true
+    }
+   },
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "PostToolUse",
+     "tool_name": "Skill",
+     "prompt_id": "p1",
+     "tool_input": {
+      "skill": "model-routing:think",
+      "args": "q"
+     },
+     "tool_response": {
+      "status": "forked",
+      "agentId": "a2"
+     }
+    },
+    "expect": {
+     "stdout_empty": true
+    }
+   },
+   {
+    "script": "receipt",
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "Stop",
+     "prompt_id": "p1",
+     "effort": {
+      "level": "medium"
+     }
+    },
+    "expect": {
+     "json_equals": {
+      "systemMessage": "Routed: 2\u00d7 Haiku 5.5 (low) | 1\u00d7 Opus 5.5 fork (high)"
+     },
+     "files_absent": [
+      "data/receipts/$KEY.jsonl"
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "name": "rc-1c more than 3 groups",
+  "script": "receipt",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": null,
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "receipts_pre": [
+   {
+    "p": "p1",
+    "m": "claude-a-1",
+    "e": "low",
+    "k": "bg",
+    "a": "general-purpose"
+   },
+   {
+    "p": "p1",
+    "m": "claude-b-1",
+    "e": "low",
+    "k": "bg",
+    "a": "general-purpose"
+   },
+   {
+    "p": "p1",
+    "m": "claude-c-1",
+    "e": null,
+    "k": "bg",
+    "a": "general-purpose"
+   },
+   {
+    "p": "p1",
+    "m": "claude-d-1",
+    "e": "low",
+    "k": "bg",
+    "a": "general-purpose"
+   }
+  ],
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "Stop",
+   "prompt_id": "p1",
+   "effort": {
+    "level": "medium"
+   }
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Routed: 1\u00d7 A 1 (low) | 1\u00d7 B 1 (low) | 1\u00d7 C 1 (default) | +1 more"
+   }
+  }
+ },
+ {
+  "name": "rc-2 other prompt only",
+  "script": "receipt",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": null,
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "receipts_pre": [
+   {
+    "p": "p0",
+    "m": "claude-haiku-5-5",
+    "e": "low",
+    "k": "bg",
+    "a": "general-purpose"
+   }
+  ],
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "Stop",
+   "prompt_id": "p1",
+   "effort": {
+    "level": "medium"
+   }
+  },
+  "expect": {
+   "stdout_empty": true,
+   "files_absent": [
+    "data/receipts/$KEY.jsonl"
+   ]
+  }
+ },
+ {
+  "name": "rc-3 no file, no Python",
+  "script": "receipt",
+  "nopy": true,
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "Stop",
+   "prompt_id": "p1",
+   "effort": {
+    "level": "medium"
+   }
+  },
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "rc-4a ROUTING_RECEIPTS=0",
+  "script": "receipt",
+  "env": {
+   "ROUTING_RECEIPTS": "0"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": null,
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "receipts_pre": [
+   {
+    "p": "p1",
+    "m": "claude-haiku-5-5",
+    "e": "low",
+    "k": "bg",
+    "a": "general-purpose"
+   },
+   {
+    "p": "p1",
+    "m": "claude-haiku-5-5",
+    "e": "low",
+    "k": "bg",
+    "a": "general-purpose"
+   },
+   {
+    "p": "p1",
+    "m": "claude-opus-5-5",
+    "e": "high",
+    "k": "fork",
+    "a": "model-routing:think"
+   }
+  ],
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "Stop",
+   "prompt_id": "p1",
+   "effort": {
+    "level": "medium"
+   }
+  },
+  "expect": {
+   "stdout_empty": true,
+   "files_absent": [
+    "data/receipts/$KEY.jsonl"
+   ],
+   "record": {
+    "totals": {
+     "claude-haiku-5-5": 2
+    }
+   }
+  }
+ },
+ {
+  "name": "rc-4b headless",
+  "script": "receipt",
+  "env": {
+   "CLAUDE_CODE_SESSION_ATTENDED": "0"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": null,
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "receipts_pre": [
+   {
+    "p": "p1",
+    "m": "claude-haiku-5-5",
+    "e": "low",
+    "k": "bg",
+    "a": "general-purpose"
+   },
+   {
+    "p": "p1",
+    "m": "claude-haiku-5-5",
+    "e": "low",
+    "k": "bg",
+    "a": "general-purpose"
+   },
+   {
+    "p": "p1",
+    "m": "claude-opus-5-5",
+    "e": "high",
+    "k": "fork",
+    "a": "model-routing:think"
+   }
+  ],
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "Stop",
+   "prompt_id": "p1",
+   "effort": {
+    "level": "medium"
+   }
+  },
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "rc-4c headless + ROUTING_SHOW_HEADLESS=1",
+  "script": "receipt",
+  "env": {
+   "CLAUDE_CODE_SESSION_ATTENDED": "0",
+   "ROUTING_SHOW_HEADLESS": "1"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": null,
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "receipts_pre": [
+   {
+    "p": "p1",
+    "m": "claude-haiku-5-5",
+    "e": "low",
+    "k": "bg",
+    "a": "general-purpose"
+   },
+   {
+    "p": "p1",
+    "m": "claude-haiku-5-5",
+    "e": "low",
+    "k": "bg",
+    "a": "general-purpose"
+   },
+   {
+    "p": "p1",
+    "m": "claude-opus-5-5",
+    "e": "high",
+    "k": "fork",
+    "a": "model-routing:think"
+   }
+  ],
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "Stop",
+   "prompt_id": "p1",
+   "effort": {
+    "level": "medium"
+   }
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Routed: 2\u00d7 Haiku 5.5 (low) | 1\u00d7 Opus 5.5 fork (high)"
+   }
+  }
+ },
+ {
+  "name": "rc-4d ROUTING_QUIET=1",
+  "script": "receipt",
+  "env": {
+   "ROUTING_QUIET": "1"
+  },
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": null,
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "receipts_pre": [
+   {
+    "p": "p1",
+    "m": "claude-haiku-5-5",
+    "e": "low",
+    "k": "bg",
+    "a": "general-purpose"
+   }
+  ],
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "Stop",
+   "prompt_id": "p1",
+   "effort": {
+    "level": "medium"
+   }
+  },
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "rc-5 fork without a known main model: read from the transcript tail",
+  "script": "receipt",
+  "record": {
+   "session_id": "s1"
+  },
+  "files": {
+   "t.jsonl": "{\"type\": \"assistant\", \"message\": {\"model\": \"claude-sonnet-5\"}}\n{\"type\": \"assistant\", \"isSidechain\": true, \"message\": {\"model\": \"claude-haiku-5-5\"}}\n{\"type\": \"user\", \"message\": {\"content\": \"x\"}}\n"
+  },
+  "receipts_pre": [
+   {
+    "p": "p1",
+    "m": null,
+    "e": "high",
+    "k": "fork",
+    "a": "model-routing:think"
+   }
+  ],
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "Stop",
+   "prompt_id": "p1",
+   "transcript_path": "$T/t.jsonl"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Routed: 1\u00d7 Sonnet 5 fork (high)"
+   },
+   "record": {
+    "main_model": null
+   }
+  }
+ },
+ {
+  "name": "ta-5 CLAUDE_CODE_EFFORT_LEVEL overrides frontmatter and per-call effort",
+  "script": "track_agent",
+  "env": {
+   "CLAUDE_CODE_EFFORT_LEVEL": "high"
+  },
+  "stdin": {
+   "tool_name": "Agent",
+   "prompt_id": "p1",
+   "tool_input": {
+    "subagent_type": "model-routing:recall",
+    "prompt": "x",
+    "description": "d"
+   },
+   "tool_response": {
+    "status": "completed",
+    "resolvedModel": "claude-haiku-5-5",
+    "agentId": "a1"
+   }
+  },
+  "expect": {
+   "receipts": [
+    {
+     "e": "high",
+     "a": "model-routing:recall"
+    }
+   ]
+  }
+ },
+ {
+  "name": "ta-5b CLAUDE_CODE_EFFORT_LEVEL=auto: model default",
+  "script": "track_agent",
+  "env": {
+   "CLAUDE_CODE_EFFORT_LEVEL": "auto"
+  },
+  "stdin": {
+   "tool_name": "Agent",
+   "prompt_id": "p1",
+   "tool_input": {
+    "subagent_type": "model-routing:recall",
+    "prompt": "x",
+    "description": "d"
+   },
+   "tool_response": {
+    "status": "completed",
+    "resolvedModel": "claude-haiku-5-5",
+    "agentId": "a1"
+   }
+  },
+  "expect": {
+   "receipts": [
+    {
+     "e": null
+    }
+   ]
+  }
+ },
+ {
+  "name": "ta-6 no CLAUDE_PLUGIN_DATA: nothing written anywhere",
+  "script": "track_agent",
+  "env": {
+   "CLAUDE_PLUGIN_DATA": null,
+   "TMPDIR": "$T/tmp"
+  },
+  "dirs": [
+   "tmp"
+  ],
+  "stdin": {
+   "tool_name": "Agent",
+   "prompt_id": "p1",
+   "tool_input": {
+    "subagent_type": "model-routing:recall",
+    "prompt": "x",
+    "description": "d"
+   },
+   "tool_response": {
+    "status": "completed",
+    "resolvedModel": "claude-haiku-5-5",
+    "agentId": "a1"
+   }
+  },
+  "expect": {
+   "stdout_empty": true,
+   "glob_absent": [
+    "tmp/claude-model-routing/receipts/*",
+    "data/receipts/*"
+   ]
+  }
+ }
+]

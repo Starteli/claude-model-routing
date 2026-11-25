@@ -1,0 +1,139 @@
+[
+ {
+  "name": "pa-1 plan approved OPEN",
+  "script": "plan_approved",
+  "stdin": {
+   "session_id": "s1",
+   "tool_name": "ExitPlanMode"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "with model: haiku if the Agent tool offers a model parameter"
+   }
+  }
+ },
+ {
+  "name": "pa-2 plan approved LOCKED",
+  "script": "plan_approved",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "tool_name": "ExitPlanMode"
+  },
+  "expect": {
+   "json_startswith": {
+    "hookSpecificOutput.additionalContext": "The plan is approved. Subagents run on the forced model"
+   }
+  }
+ },
+ {
+  "name": "pa-3 subagent plan ignored",
+  "script": "plan_approved",
+  "stdin": {
+   "agent_id": "a",
+   "tool_name": "ExitPlanMode"
+  },
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "pc-1 post_compact marker in plugin data",
+  "script": "post_compact",
+  "stdin": {
+   "session_id": "s1",
+   "trigger": "auto",
+   "compact_summary": "x"
+  },
+  "expect": {
+   "files_exist": [
+    "data/compacted/s1"
+   ],
+   "files_absent": [
+    "project/.handoff/LATEST.md"
+   ]
+  }
+ },
+ {
+  "name": "pc-2 manual compact saves a session-stamped handoff",
+  "script": "post_compact",
+  "stdin": {
+   "session_id": "s1",
+   "trigger": "manual",
+   "compact_summary": "<summary>Goal stuff</summary>"
+  },
+  "expect": {
+   "files_exist": [
+    "data/compacted/s1",
+    "project/.handoff/LATEST.md"
+   ]
+  }
+ },
+ {
+  "name": "pc-3 handoff from compact loads after /clear",
+  "script": "post_compact",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": null,
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "steps": [
+   {
+    "stdin": {
+     "session_id": "s1",
+     "trigger": "manual",
+     "compact_summary": "<summary>Goal stuff</summary>"
+    },
+    "expect": {}
+   },
+   {
+    "script": "session_start",
+    "stdin": {
+     "session_id": "s2",
+     "source": "clear",
+     "hook_event_name": "SessionStart"
+    },
+    "expect": {
+     "json_contains": {
+      "hookSpecificOutput.additionalContext": "Goal stuff"
+     },
+     "json_startswith": {
+      "systemMessage": "Loaded handoff"
+     }
+    }
+   }
+  ]
+ },
+ {
+  "name": "pr-1 pre_compact instructions",
+  "script": "pre_compact",
+  "stdin": {
+   "trigger": "manual"
+  },
+  "expect": {
+   "stdout_contains": [
+    "A different model may continue from this summary"
+   ]
+  }
+ }
+]

@@ -1,19 +1,12 @@
 ---
 name: setup
-description: Turn on running approved plans in a fresh context, keeping the user's own model (default), or optionally pinning opusplan so Sonnet executes.
-argument-hint: "[same | sonnet]"
+description: Check settings that block or weaken the model mix and routing, and fix the ones you pick.
+argument-hint: "[all]"
 disable-model-invocation: true
-allowed-tools: Bash(routing-setup *)
+allowed-tools: Bash(sh "${CLAUDE_PLUGIN_ROOT}/scripts/run.sh" routing_setup *)
 ---
+!`sh "${CLAUDE_PLUGIN_ROOT}/scripts/run.sh" routing_setup --check --data "${CLAUDE_PLUGIN_DATA}" --project "${CLAUDE_PROJECT_DIR}" || true`
 
-The user's choice: "$ARGUMENTS". "sonnet" means pin opusplan: Opus plans and Sonnet executes. Anything else, including nothing, means "same": plans run on whatever model they're using, and an opusplan pin from an earlier setup is removed.
-
-If they chose "sonnet", warn them first in one line: pinning opusplan switches off Claude Code's own model mix (a lead model with cheaper workers, shown as its own row in /model) if their account has one.
-
-1. Run `routing-setup --check --executor <sonnet|same>` and show the user, in a short numbered list, what it would change in their settings.
-2. If something would change, run `routing-setup --apply --executor <sonnet|same>` and report the result in two or three lines.
-3. Tell the user how it works now, as numbered steps:
-   1. For a bigger task, press Shift+Tab to enter plan mode.
-   2. The plan's first line says which model carries it out (`Executor: sonnet` by default). To pick another, press Ctrl+G and edit that line before approving.
-   3. Approve with "Yes, clear context". The plan runs in a fresh session, so nothing re-reads the planning chat.
-   4. To hand the rest of a task to a different model midway, run `/execute opus` (or sonnet or haiku). The work goes to a fresh subagent, with no re-read.
+1. Show the user the check above exactly.
+2. If it lists fixes: when the argument is "all", run `sh "${CLAUDE_PLUGIN_ROOT}/scripts/run.sh" routing_setup --apply all --data "${CLAUDE_PLUGIN_DATA}" --project "${CLAUDE_PROJECT_DIR}"`. Otherwise ask exactly: "Which to fix? Reply with numbers (e.g. 1 3) or all." Then run the same command with `--apply <numbers, comma-separated>`.
+3. Show its output exactly. If it has a line starting "Removed" or "Turned on", add one line: "Takes effect in new sessions."

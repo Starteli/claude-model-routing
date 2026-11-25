@@ -3,131 +3,106 @@
 
 A /model switch throws away the current model's prompt cache, so the new model
 re-reads the whole conversation uncached. This hook:
-  - lets cheap switches through without Claude Code's confirmation prompt
-  - for expensive ones (big context, warm cache), asks first and names the
-    cheaper path: /compact, then /model
+  - lets cheap switches through without Claude Code's confirmation prompt;
+  - for expensive ones (big context, warm cache) asks first and names the
+    cheaper path, and says when the switch also leaves the model mix;
+  - with ROUTING_MIX_GUARD=1, also asks on a cheap switch away from the mix lead;
+  - never asks in a non-interactive session (CLAUDE_CODE_SESSION_ATTENDED=0),
+    where "ask" would be a refusal.
 
-Config (settings.json "env"):
-  ROUTING_ASK_TOKENS   ask when the switch re-sends at least this many tokens (default 40000)
-  ROUTING_ASK_USD      ...and the estimated re-cache cost is at least this much (default 0.10)
-  ROUTING_FAST_SWITCH  0 = keep Claude Code's own confirmation on cheap switches (default 1)
-  ROUTING_HANDOFF_DIR  where handoffs live, relative to the project (default .handoff)
+It reads only the small session record: never ~/.claude.json or settings
+files, because a hook that times out blocks the switch.
 
+Config (settings.json "env"): ROUTING_ASK_TOKENS (40000), ROUTING_ASK_USD (0.10),
+ROUTING_FAST_SWITCH (1), ROUTING_MIX_GUARD (0), ROUTING_HANDOFF_DIR (.handoff).
 Any failure exits 0 with no output, so the switch proceeds normally.
 """
-import json
 import os
-import sys
-import tempfile
 import time
-from pathlib import Path
+
+import routing_lib as rl
 
 
-def just_compacted(session_id, window_min=15):
-    """True if post_compact.py marked this session as compacted recently.
-
-    Right after /compact the context is small, but the token count this hook
-    is handed may still describe the last pre-compaction response.
-    """
+def compacted_recently(session_id, window_min=15):
     if not session_id:
         return False
-    marker = Path(tempfile.gettempdir()) / "claude-model-routing" / f"{session_id}.compacted"
     try:
-        return (time.time() - marker.stat().st_mtime) / 60 <= window_min
+        return (time.time() - os.path.getmtime(rl.compacted_path(session_id))) / 60 <= window_min
     except OSError:
         return False
 
 
-def env_float(name, default):
-    try:
-        return float(os.environ.get(name, default))
-    except ValueError:
-        return float(default)
+def fresh_handoff(pdir, session_id):
+    """True only when /clear would really reload it (same test as session_start)."""
+    latest = os.path.join(pdir, os.environ.get("ROUTING_HANDOFF_DIR", ".handoff"), "LATEST.md")
+    return rl.handoff_loads_after_clear(latest, session_id)
 
 
-def fresh_handoff_minutes(project_dir):
-    """Age in minutes of LATEST.md if it was written in the last 30 minutes."""
-    handoff_dir = os.environ.get("ROUTING_HANDOFF_DIR", ".handoff")
-    latest = Path(project_dir) / handoff_dir / "LATEST.md"
-    try:
-        age = (time.time() - latest.stat().st_mtime) / 60
-    except OSError:
-        return None
-    return age if age <= 30 else None
-
-
-def emit(obj):
-    print(json.dumps(obj))
+def ask(reason):
+    return {"hookSpecificOutput": {"hookEventName": "PreModelSwitch",
+                                   "permissionDecision": "ask",
+                                   "permissionDecisionReason": reason}}
 
 
 def main():
+    d = rl.read_stdin_json()
+    if d is None:
+        return
+    frm, to = d.get("from_model"), d.get("to_model")
+    if not to or rl.canon(frm) == rl.canon(to):
+        return
+    rec = rl.load_record(sid=d.get("session_id"))
+    E = os.environ
+    locked = rl.truthy(E.get("CLAUDE_CODE_SUBAGENT_MODEL_FORCE"))
+    state = rec.get("state") if rec and isinstance(rec.get("state"), dict) else None
+    origin = state.get("origin") if state and state.get("mode") == "LOCKED" else "unknown"
+    lead = (rec.get("lead") if rec else None) or frm
+    worker = rl.live_worker(E) or (state.get("worker") if state else None)
+    label = rec.get("label") if rec else None
+    leaving_mix = (locked and origin in ("mix", "unknown")
+                   and rl.canon(frm) == rl.canon(lead) and rl.canon(to) != rl.canon(lead))
+    # Non-interactive (-p): "ask" is a refusal (F12), so never ask there.
+    headless = E.get("CLAUDE_CODE_SESSION_ATTENDED") == "0"
+
     try:
-        data = json.load(sys.stdin)
-    except Exception:
-        return 0
+        ctx = int(d.get("context_tokens") or 0)
+    except (TypeError, ValueError):
+        ctx = 0
+    warm = bool(d.get("prompt_cache_warm"))
+    usd, pricing, src = d.get("estimated_cache_write_usd"), d.get("pricing"), d.get("source")
+    is_priced = rl.priced(usd, pricing)
+    cheap = (ctx < rl.env_float("ROUTING_ASK_TOKENS", 40000)
+             or (is_priced and usd < rl.env_float("ROUTING_ASK_USD", 0.10))
+             or compacted_recently(d.get("session_id")))
 
-    from_model = data.get("from_model")
-    to_model = data.get("to_model")
-    if not to_model or from_model == to_model:
-        return 0
+    if cheap or not warm or headless:
+        if (os.environ.get("ROUTING_MIX_GUARD") == "1" and leaving_mix and src in ("command", "picker")
+                and not headless):
+            rl.emit(ask(rl.lines.U14(lead, worker, label)))
+        elif os.environ.get("ROUTING_FAST_SWITCH", "1") != "0":
+            rl.emit({"hookSpecificOutput": {"hookEventName": "PreModelSwitch",
+                                            "permissionDecision": "allow"}})
+        return
 
-    ctx = int(data.get("context_tokens") or 0)
-    warm = bool(data.get("prompt_cache_warm"))
-    usd = data.get("estimated_cache_write_usd")
-    pricing = data.get("pricing")
-    source = data.get("source")
-    target = data.get("requested_model") or to_model
-
-    ask_tokens = env_float("ROUTING_ASK_TOKENS", 40000)
-    ask_usd = env_float("ROUTING_ASK_USD", 0.10)
-    fast = os.environ.get("ROUTING_FAST_SWITCH", "1") != "0"
-
-    priced = isinstance(usd, (int, float)) and pricing in ("catalog", "configured")
-    cheap = (ctx < ask_tokens or (priced and usd < ask_usd)
-             or just_compacted(data.get("session_id")))
-
-    # Nothing to lose: small context, cheap target, or the cache is already cold
-    # (staying would re-read everything too).
-    if cheap or not warm:
-        if fast:
-            emit({"hookSpecificOutput": {"hookEventName": "PreModelSwitch",
-                                         "permissionDecision": "allow"}})
-        return 0
-
-    cost = ""
-    if priced:
-        who = "your" if pricing == "configured" else "list"
-        cost = f", about ${usd:.2f} at {who} prices"
-
-    project_dir = os.environ.get("CLAUDE_PROJECT_DIR") or data.get("cwd") or os.getcwd()
-    age = fresh_handoff_minutes(project_dir)
-    if age is not None:
-        steps = ["/clear", f"/model {target}"]
-        note = f" Your handoff from {max(1, round(age))} min ago loads by itself."
-    else:
-        steps = ["/compact", f"/model {target}"]
-        note = ""
-    escalate = (f" Or stay on this model and run /execute {target} to hand the remaining "
-                f"work to a fresh {target} subagent.")
-    head = f"This re-sends ~{ctx // 1000}K tokens to {to_model} with no cache{cost}."
-
-    if source == "sdk":
-        # Remote Control / SDK: "ask" would count as a refusal, so the switch
-        # goes ahead and this is just a heads-up for next time.
-        numbered = ", ".join(f"({i}) {s}" for i, s in enumerate(steps, 1))
-        emit({"systemMessage": f"{head} Next time, cheaper: {numbered}.{note}{escalate}"})
-    else:
-        numbered = ", ".join(f"({i}) {s}" for i, s in enumerate(["choose No"] + steps, 1))
-        emit({"hookSpecificOutput": {
-            "hookEventName": "PreModelSwitch",
-            "permissionDecision": "ask",
-            "permissionDecisionReason": f"{head} Cheaper: {numbered}.{note}{escalate} Switch anyway?",
-        }})
-    return 0
+    ktok = ctx // 1000
+    if src == "sdk":
+        # "ask" is a refusal on the SDK surface: let it through, say so for next time.
+        if rl.attended():
+            rl.emit({"systemMessage": rl.lines.U12_sdk(ktok, to, usd, pricing)})
+        return
+    req = d.get("requested_model") or rl.alias(to)
+    has_lead = bool(rec and rec.get("lead"))
+    mix_lead = rec.get("mix_lead") if rec else None
+    # An inline /model <name> drops the mix (F8): when the target is the mix lead, point at the row.
+    back_to_lead = (locked and origin in ("mix", "unknown") and has_lead
+                    and rl.canon(to) == rl.canon(lead) and rl.canon(frm) != rl.canon(lead))
+    to_mix_row = back_to_lead or (not locked and (
+        (label and req == label) or (mix_lead and rl.canon(to) == rl.canon(mix_lead))))
+    reason = rl.lines.U12(ktok, to, usd, pricing, req, fresh_handoff(rl.project_dir(d), d.get("session_id")),
+                          leaving_mix, locked, lead, worker, label=label, to_mix_row=to_mix_row,
+                          mix_sure=(origin == "mix" or bool(label)))
+    rl.emit(ask(reason))
 
 
 if __name__ == "__main__":
-    try:
-        sys.exit(main())
-    except Exception:
-        sys.exit(0)
+    rl.safe_main(main)

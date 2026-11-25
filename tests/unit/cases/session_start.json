@@ -1,0 +1,1195 @@
+[
+ {
+  "name": "ss-1 OPEN startup",
+  "script": "session_start",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_startswith": {
+    "hookSpecificOutput.additionalContext": "Current routing (replaces earlier routing notes): subagent models are selectable"
+   },
+   "json_equals": {
+    "systemMessage": "Routing on \u00b7 recall Haiku \u00b7 build Sonnet \u00b7 hard Opus"
+   },
+   "record": {
+    "state": {
+     "mode": "OPEN"
+    },
+    "main_model": "claude-opus-5-5",
+    "lead": null,
+    "session_id": "s1"
+   }
+  }
+ },
+ {
+  "name": "ss-2 mix (Linux evidence)",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "launch": "",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Model mix on \u00b7 Opus 5.5 leads \u00b7 Sonnet 5 runs subagents"
+   },
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "subagents run on claude-sonnet-5, forced by the model mix"
+   },
+   "record": {
+    "lead": "claude-opus-5-5",
+    "state": {
+     "origin": "mix",
+     "mode": "LOCKED"
+    },
+    "claude_sig": "LOCKED|claude-sonnet-5|0|0",
+    "user_sig": "LOCKED|claude-sonnet-5|0|0"
+   }
+  }
+ },
+ {
+  "name": "ss-3 settings origin",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "launch": "",
+  "files": {
+   "config/settings.json": {
+    "env": {
+     "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
+     "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1"
+    }
+   }
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Subagents forced to Sonnet 5 (your user settings) \u00b7 /model-routing:status"
+   },
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "forced by user settings"
+   },
+   "record": {
+    "state": {
+     "origin": "settings:user"
+    }
+   }
+  }
+ },
+ {
+  "name": "ss-4 launch origin",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "launch": "CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1\nCLAUDE_CODE_SUBAGENT_MODEL=claude-sonnet-5",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Subagents forced to Sonnet 5 (set at launch) \u00b7 /model-routing:status"
+   },
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "forced by a launch environment setting"
+   },
+   "record": {
+    "state": {
+     "origin": "launch"
+    }
+   }
+  }
+ },
+ {
+  "name": "ss-4b launch origin, NUL-separated",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "launch": "A=1\u0000CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1\u0000",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "record": {
+    "state": {
+     "origin": "launch"
+    }
+   }
+  }
+ },
+ {
+  "name": "ss-5 unknown",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
+   "ROUTING_TEST_LAUNCH_ENV": ""
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Subagents forced to Sonnet 5 \u00b7 main Opus 5.5 \u00b7 /model-routing:status"
+   },
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "forced by CLAUDE_CODE_SUBAGENT_MODEL_FORCE"
+   },
+   "record": {
+    "state": {
+     "origin": "unknown"
+    }
+   }
+  }
+ },
+ {
+  "name": "ss-6 FORCE=true",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "true",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "launch": "",
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_contains": {
+    "systemMessage": "(your env setting)"
+   },
+   "record": {
+    "state": {
+     "origin": "user",
+     "mode": "LOCKED"
+    }
+   }
+  }
+ },
+ {
+  "name": "ss-7 cache match",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
+   "ROUTING_TEST_LAUNCH_ENV": ""
+  },
+  "files": {
+   "config/.claude.json": {
+    "clientDataCacheSlots": {
+     "a": {
+      "data": {
+       "tengu_zesty_horizon": {
+        "lead": "claude-opus-5-5",
+        "worker": "claude-sonnet-5",
+        "label": "Opus + Sonnet"
+       }
+      },
+      "model": "claude-opus-5-5"
+     }
+    }
+   }
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Model mix on \u00b7 Opus 5.5 leads \u00b7 Sonnet 5 runs subagents"
+   },
+   "record": {
+    "state": {
+     "origin": "mix"
+    },
+    "label": "Opus + Sonnet"
+   }
+  }
+ },
+ {
+  "name": "ss-7b cache ignored with ROUTING_MIX_CACHE=0",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
+   "ROUTING_TEST_LAUNCH_ENV": "",
+   "ROUTING_MIX_CACHE": "0"
+  },
+  "files": {
+   "config/.claude.json": {
+    "clientDataCacheSlots": {
+     "a": {
+      "data": {
+       "tengu_zesty_horizon": {
+        "lead": "claude-opus-5-5",
+        "worker": "claude-sonnet-5",
+        "label": "Opus + Sonnet"
+       }
+      },
+      "model": "claude-opus-5-5"
+     }
+    }
+   }
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "record": {
+    "state": {
+     "origin": "unknown"
+    },
+    "label": null
+   }
+  }
+ },
+ {
+  "name": "ss-8 headless",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SESSION_ATTENDED": "0"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_absent": [
+    "systemMessage"
+   ],
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "subagent models are selectable"
+   }
+  }
+ },
+ {
+  "name": "ss-8b headless shown with ROUTING_SHOW_HEADLESS=1",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SESSION_ATTENDED": "0",
+   "ROUTING_SHOW_HEADLESS": "1"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Routing on \u00b7 recall Haiku \u00b7 build Sonnet \u00b7 hard Opus"
+   }
+  }
+ },
+ {
+  "name": "ss-9 quiet",
+  "script": "session_start",
+  "env": {
+   "ROUTING_QUIET": "1"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_absent": [
+    "systemMessage"
+   ],
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "Current routing"
+   }
+  }
+ },
+ {
+  "name": "ss-9b ROUTING_POLICY=0 sends no note",
+  "script": "session_start",
+  "env": {
+   "ROUTING_POLICY": "0"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_absent": [
+    "hookSpecificOutput"
+   ],
+   "json_contains": {
+    "systemMessage": "Routing on"
+   }
+  }
+ },
+ {
+  "name": "ss-10 opusplan",
+  "script": "session_start",
+  "env": {
+   "ROUTING_QUIET": "1"
+  },
+  "files": {
+   "config/settings.json": {
+    "model": "opusplan"
+   }
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-sonnet-5"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Old opusplan pin may block your model mix \u00b7 Fix: /model-routing:setup"
+   }
+  }
+ },
+ {
+  "name": "ss-11 didn't load",
+  "script": "session_start",
+  "files": {
+   "config/.claude.json": {
+    "clientDataCacheSlots": {
+     "a": {
+      "data": {
+       "tengu_zesty_horizon": {
+        "lead": "claude-opus-5-5",
+        "worker": "claude-sonnet-5",
+        "label": "Opus + Sonnet"
+       }
+      },
+      "model": "claude-opus-5-5"
+     }
+    }
+   }
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Model mix didn't load in time \u00b7 /model \u2192 \"Opus + Sonnet\" row turns it on"
+   }
+  }
+ },
+ {
+  "name": "ss-11b didn't load: a SUBAGENT var blocks the mix (U17)",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL": "haiku"
+  },
+  "files": {
+   "config/.claude.json": {
+    "clientDataCacheSlots": {
+     "a": {
+      "data": {
+       "tengu_zesty_horizon": {
+        "lead": "claude-opus-5-5",
+        "worker": "claude-sonnet-5",
+        "label": "Opus + Sonnet"
+       }
+      },
+      "model": "claude-opus-5-5"
+     }
+    }
+   }
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Model mix blocked by CLAUDE_CODE_SUBAGENT_MODEL \u00b7 unset it, then restart"
+   },
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "Subagents without their own model default to haiku."
+   }
+  }
+ },
+ {
+  "name": "ss-12 resume, same PID",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "launch": "",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "LOCKED|claude-sonnet-5|0|0",
+   "user_sig": "LOCKED|claude-sonnet-5|0|0",
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "resume",
+   "model": "claude-sonnet-5"
+  },
+  "expect": {
+   "stdout_not_contains": [
+    "Current routing"
+   ],
+   "record": {
+    "claude_sig": null,
+    "lead": "claude-opus-5-5",
+    "main_model": "claude-sonnet-5",
+    "user_sig": "LOCKED|claude-sonnet-5|0|0",
+    "created": "$NOW-600"
+   }
+  }
+ },
+ {
+  "name": "ss-13 resume, stale record",
+  "script": "session_start",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-172800",
+   "updated": "$NOW-172800",
+   "main_model": null,
+   "lead": "claude-opus-5-5",
+   "state": null,
+   "label": null,
+   "claude_sig": null,
+   "user_sig": "X",
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "mtimes": {
+   "data/sessions/$KEY.json": "$NOW-172800"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "resume",
+   "model": "claude-sonnet-5"
+  },
+  "expect": {
+   "record": {
+    "created": "$RECENT",
+    "user_sig": null,
+    "claude_sig": null,
+    "main_model": "claude-sonnet-5"
+   }
+  }
+ },
+ {
+  "name": "ss-13b resume cold cache tip (LOCKED)",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "launch": "",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": "Opus + Sonnet",
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "resume",
+   "model": "claude-opus-5-5",
+   "prompt_cache_likely_expired": true,
+   "context_tokens": 120000,
+   "estimated_cache_write_usd": 0.9,
+   "pricing": "catalog"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Cache expired: switching model now costs nothing extra (~120K tokens re-sent anyway, ~$0.90). Keep the mix: /model \u2192 \"Opus + Sonnet\" row."
+   }
+  }
+ },
+ {
+  "name": "ss-14 clear + handoff, match",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "launch": "",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "files": {
+   "project/.handoff/LATEST.md": "# Handoff: thing\n\n## Goal\nDo the thing X\n\n<!-- handoff-source: written 2026-11-25 10:00; session s1 -->\n"
+  },
+  "stdin": {
+   "session_id": "s2",
+   "source": "clear",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": [
+     "Handoff from the previous session",
+     "Do the thing X",
+     "Current routing"
+    ]
+   },
+   "json_startswith": {
+    "systemMessage": "Loaded handoff"
+   },
+   "record": {
+    "session_id": "s2",
+    "prev_session_id": "s1",
+    "lead": "claude-opus-5-5",
+    "session_ids": [
+     "s1",
+     "s2"
+    ]
+   }
+  }
+ },
+ {
+  "name": "ss-14b clear + handoff too old to load",
+  "script": "session_start",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": null,
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "files": {
+   "project/.handoff/LATEST.md": "# Handoff: thing\n\n## Goal\nDo the thing X\n\n<!-- handoff-source: written 2026-11-25 10:00; session s1 -->\n"
+  },
+  "mtimes": {
+   "project/.handoff/LATEST.md": "$NOW-1800"
+  },
+  "stdin": {
+   "session_id": "s2",
+   "source": "clear",
+   "hook_event_name": "SessionStart"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "A handoff from 30 min ago"
+   },
+   "json_absent": [
+    "systemMessage"
+   ]
+  }
+ },
+ {
+  "name": "ss-15 clear + handoff, other session",
+  "script": "session_start",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": null,
+   "label": null,
+   "claude_sig": null,
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "files": {
+   "project/.handoff/LATEST.md": "# Handoff: thing\n\n## Goal\nDo the thing X\n\n<!-- handoff-source: written 2026-11-25 10:00; session s9 -->\n"
+  },
+  "stdin": {
+   "session_id": "s2",
+   "source": "clear",
+   "hook_event_name": "SessionStart"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": [
+     "A handoff from",
+     "goal: Do the thing X"
+    ]
+   },
+   "json_not_contains": {
+    "hookSpecificOutput.additionalContext": "Handoff from the previous session"
+   },
+   "stdout_not_contains": [
+    "Loaded"
+   ],
+   "json_absent": [
+    "systemMessage"
+   ]
+  }
+ },
+ {
+  "name": "ss-16 compact",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "launch": "",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": "claude-opus-5-5",
+   "lead": "claude-opus-5-5",
+   "state": {
+    "mode": "LOCKED",
+    "worker": "claude-sonnet-5",
+    "default_worker": null,
+    "origin": "mix",
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "LOCKED|claude-sonnet-5|0|0",
+   "user_sig": null,
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "compact"
+  },
+  "expect": {
+   "json_startswith": {
+    "hookSpecificOutput.additionalContext": "Current routing (replaces earlier routing notes): subagents run on claude-sonnet-5"
+   },
+   "json_absent": [
+    "systemMessage"
+   ],
+   "record": {
+    "lead": "claude-opus-5-5"
+   }
+  }
+ },
+ {
+  "name": "ss-17 fork",
+  "script": "session_start",
+  "record": {
+   "v": 2,
+   "pid": "4242",
+   "session_id": "s1",
+   "session_ids": [
+    "s1"
+   ],
+   "created": "$NOW-600",
+   "updated": "$NOW-60",
+   "main_model": null,
+   "lead": null,
+   "state": {
+    "mode": "OPEN",
+    "worker": null,
+    "default_worker": null,
+    "origin": null,
+    "effort_locked": false
+   },
+   "label": null,
+   "claude_sig": "OPEN||0|0",
+   "user_sig": "OPEN||0|0",
+   "orphan_told": false,
+   "last_switch": null,
+   "last_prompt_ts": "$NOW-100",
+   "plan_note_given": false,
+   "session_effort": null,
+   "totals": {}
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "fork"
+  },
+  "expect": {
+   "stdout_not_contains": [
+    "Current routing"
+   ],
+   "record": {
+    "claude_sig": null,
+    "user_sig": "OPEN||0|0"
+   }
+  }
+ },
+ {
+  "name": "ss-18 bad stdin",
+  "script": "session_start",
+  "stdin": "not json",
+  "expect": {
+   "stdout_empty": true
+  }
+ },
+ {
+  "name": "ss-19 startup prunes week-old files",
+  "script": "session_start",
+  "files": {
+   "data/sessions/old.json": "{}",
+   "data/receipts/old.jsonl": "{}\n",
+   "data/sessions/new.json": "{}"
+  },
+  "mtimes": {
+   "data/sessions/old.json": "$NOW-700000",
+   "data/receipts/old.jsonl": "$NOW-700000"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "files_absent": [
+    "data/sessions/old.json",
+    "data/receipts/old.jsonl"
+   ],
+   "files_exist": [
+    "data/sessions/new.json",
+    "data/sessions/$KEY.json"
+   ]
+  }
+ },
+ {
+  "name": "ss-20 no CLAUDE_PID: falls back to sid key",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_PID": null
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "files_exist": [
+    "data/sessions/sid-s1.json"
+   ]
+  }
+ },
+ {
+  "name": "ss-20 U4 without a main model: no 'main the main model'",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Subagents forced to Sonnet 5 \u00b7 /model-routing:status"
+   }
+  }
+ },
+ {
+  "name": "ss-21 FORCE with SUBAGENT_MODEL=inherit: subagents run on the main model",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "inherit"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Subagents run on the main model (Opus 5.5) \u00b7 /model-routing:status"
+   }
+  }
+ },
+ {
+  "name": "ss-22 unknown origin: note says the force may be the model mix",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_contains": {
+    "hookSpecificOutput.additionalContext": "forced by CLAUDE_CODE_SUBAGENT_MODEL_FORCE (possibly the model mix)"
+   }
+  }
+ },
+ {
+  "name": "ss-23 managed settings origin: set by your admin",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
+   "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5"
+  },
+  "files": {
+   "managed/managed-settings.json": {
+    "env": {
+     "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
+     "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1"
+    }
+   }
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Subagents forced to Sonnet 5 (set by your admin) \u00b7 /model-routing:status"
+   }
+  }
+ },
+ {
+  "name": "ss-24 managed opusplan pin: ask your admin",
+  "script": "session_start",
+  "files": {
+   "managed/managed-settings.json": {
+    "model": "opusplan"
+   }
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-sonnet-5"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Admin opusplan pin may block your model mix \u00b7 ask your admin"
+   }
+  }
+ },
+ {
+  "name": "ss-25 opusplan line at most once a day without a mix recipe",
+  "script": "session_start",
+  "env": {
+   "ROUTING_QUIET": "1"
+  },
+  "files": {
+   "config/settings.json": {
+    "model": "opusplan"
+   }
+  },
+  "steps": [
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "SessionStart",
+     "cwd": "$T/project",
+     "source": "startup",
+     "model": "claude-sonnet-5"
+    },
+    "expect": {
+     "json_equals": {
+      "systemMessage": "Old opusplan pin may block your model mix \u00b7 Fix: /model-routing:setup"
+     }
+    }
+   },
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "SessionStart",
+     "cwd": "$T/project",
+     "source": "startup",
+     "model": "claude-sonnet-5"
+    },
+    "expect": {
+     "json_absent": [
+      "systemMessage"
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "name": "ss-25b opusplan line every startup while a mix recipe is cached",
+  "script": "session_start",
+  "env": {
+   "ROUTING_QUIET": "1"
+  },
+  "files": {
+   "config/settings.json": {
+    "model": "opusplan"
+   },
+   "config/.claude.json": {
+    "clientDataCacheSlots": {
+     "a": {
+      "data": {
+       "tengu_zesty_horizon": {
+        "lead": "claude-opus-5-5",
+        "worker": "claude-sonnet-5",
+        "label": "Opus + Sonnet"
+       }
+      },
+      "model": "claude-opus-5-5"
+     }
+    }
+   }
+  },
+  "steps": [
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "SessionStart",
+     "cwd": "$T/project",
+     "source": "startup",
+     "model": "claude-sonnet-5"
+    },
+    "expect": {
+     "json_equals": {
+      "systemMessage": "Old opusplan pin may block your model mix \u00b7 Fix: /model-routing:setup"
+     }
+    }
+   },
+   {
+    "stdin": {
+     "session_id": "s1",
+     "hook_event_name": "SessionStart",
+     "cwd": "$T/project",
+     "source": "startup",
+     "model": "claude-sonnet-5"
+    },
+    "expect": {
+     "json_equals": {
+      "systemMessage": "Old opusplan pin may block your model mix \u00b7 Fix: /model-routing:setup"
+     }
+    }
+   }
+  ]
+ },
+ {
+  "name": "ss-26 SUBAGENT var from local settings blocks the mix: setup fixes it",
+  "script": "session_start",
+  "env": {
+   "CLAUDE_CODE_SUBAGENT_MODEL": "haiku"
+  },
+  "files": {
+   "config/.claude.json": {
+    "clientDataCacheSlots": {
+     "a": {
+      "data": {
+       "tengu_zesty_horizon": {
+        "lead": "claude-opus-5-5",
+        "worker": "claude-sonnet-5",
+        "label": "Opus + Sonnet"
+       }
+      },
+      "model": "claude-opus-5-5"
+     }
+    }
+   },
+   "project/.claude/settings.local.json": {
+    "env": {
+     "CLAUDE_CODE_SUBAGENT_MODEL": "haiku"
+    }
+   }
+  },
+  "stdin": {
+   "session_id": "s1",
+   "hook_event_name": "SessionStart",
+   "cwd": "$T/project",
+   "source": "startup",
+   "model": "claude-opus-5-5"
+  },
+  "expect": {
+   "json_equals": {
+    "systemMessage": "Model mix blocked by CLAUDE_CODE_SUBAGENT_MODEL \u00b7 fix: /model-routing:setup"
+   },
+   "record": {
+    "mix_lead": "claude-opus-5-5",
+    "label": "Opus + Sonnet"
+   }
+  }
+ }
+]

@@ -1,147 +1,145 @@
 # model-routing
 
-A Claude Code plugin that makes model switching cheap, and mostly automatic: the expensive model plans, cheaper models execute, and nothing re-reads a long conversation it doesn't need.
+A Claude Code plugin that shows you which models do the work, keeps Claude Code's model mix on, and makes model switches cheaper.
 
-## The problem
+Three words you will see:
 
-Each model has its own prompt cache. When you run `/model` mid-session, the new model re-reads the whole conversation with no cache hits, even though nothing changed. Late in a long session that's the most expensive request you'll make.
+- **Subagent**: a helper Claude starts for one task. It begins with an empty context, so it never re-reads your chat.
+- **Model mix**: a row in `/model` that some accounts get. One lead model runs the chat, and a cheaper model runs all subagents.
+- **Switching cost**: when you change model mid-chat, the new model re-reads the whole chat without cache. Late in a long chat that is the expensive moment, so the plugin warns you then.
 
-Example: a 150K-token session on Sonnet 5.5, on a subscription (1-hour cache, so writes cost 2x input):
+## What you will see
 
-| What you do | What the next request costs (list price) |
-|---|---|
-| Keep going on Sonnet | 150K cached reads × $0.10/M ≈ **$0.015** |
-| `/model opus` | 150K uncached writes × $8/M ≈ **$1.20**, about 80x a normal turn |
-| `/compact`, then `/model opus` | Opus reads the fixed part (system prompt, tools, CLAUDE.md) plus a ~1–2K summary. At ~25K that's ≈ **$0.21** |
-| `/escalate <question>` (stay on Sonnet) | An Opus subagent reads a short brief and the files it needs. Your Sonnet cache is untouched |
+1. **One line when a session starts.** It says how subagents are routed. For example:
+   - `Routing on · recall Haiku · build Sonnet · hard Opus` (no model mix: the plugin picks per task)
+   - `Model mix on · Opus 5.5 leads · Sonnet 5 runs subagents` (your account's model mix is on)
+   - `Subagents forced to Sonnet 5 (set at launch) · /model-routing:status` (something else forces one model)
+2. **One line after a turn where subagents ran.** For example: `Routed: 2× Haiku 5.5 (low) | 1× Opus 5.5 fork (high)`. Claude Code hides finished subagents, so this is how you see where work went.
+   - The word in brackets is the effort level the subagent was given.
+   - `fork` means a side task on your main model (from `/model-routing:escalate`).
+3. **A line only when something is wrong.** Each one ends with the fix:
 
-The fixed part gets re-read on any switch, so the savings come from dropping the conversation history. To see your fixed part, check a fresh session's first turn. MCP servers make it bigger.
+   | You see | It means |
+   |---|---|
+   | `Old opusplan pin may block your model mix · Fix: /model-routing:setup` | An old setting stops the mix. Run the fix. |
+   | `Model mix didn't load in time · /model → "…" row turns it on` | The mix was late at startup. Pick its row in `/model`. |
+   | `Model mix blocked by CLAUDE_CODE_SUBAGENT_MODEL · …` | A variable you set stops the mix. Unset it, then restart. |
+   | `Mix half-on (main …) · fix: /model → …` | You changed model outside `/model`. Pick the mix row again. |
+   | `Mix off after resume · restore: /model → …` | Resuming an old chat turned the mix off. |
+   | `model-routing is off: Python 3 not found.` | Install Python 3. |
 
-On a subscription the dollar figures are only estimates. Your plan meters usage its own way, but the token math is the same.
+4. **A question before an expensive `/model` switch.** Late in a long chat, a switch makes the new model re-read everything. You see the cost and a cheaper way: `1) /compact 2) /model <name>`.
+5. **`/model-routing:status` any time.** Five short lines: who runs subagents, your main model, runs so far, problems, commands.
 
-## Plan on Opus, execute on Sonnet in a fresh chat
-
-Claude Code has this built in, but it's off by default. Run the setup once. It backs up `~/.claude/settings.json` first:
-
-| Command | Effect |
-|---|---|
-| `/model-routing:setup` | Only `"showClearContextOnPlanAccept": true`. Plans run on whatever model you're using, and an `opusplan` pin from an older setup is removed |
-| `/model-routing:setup sonnet` | Also pins `"model": "opusplan"` (Opus plans, Sonnet executes) |
-
-Pinning `opusplan` has a catch. If your account gets Claude Code's own model mix (a lead model with cheaper worker subagents, shown as its own row in `/model`), the mix only runs while your session model is its lead model, so `opusplan` switches it off. That's why the default no longer pins it.
-
-`showClearContextOnPlanAccept` makes plan approval offer **"Yes, clear context"**, which starts a fresh session that carries out just the approved plan.
-
-Then, for a bigger task:
-
-1. Press Shift+Tab to enter plan mode.
-2. The plan starts with `Executor: sonnet`. To run this plan on another model, press Ctrl+G and change that line before approving. You can also just say "run this one on Opus" while planning.
-3. Pick **"Yes, clear context"**. The plan runs in a fresh session. If the executor isn't the session's model, the whole plan goes to a fresh subagent on the executor model. Either way, nothing re-reads the planning chat.
-
-To change your mind midway, run `/execute opus` (or sonnet or haiku). The rest of the work goes to a fresh subagent on that model, which reads a brief of what's done and what's left instead of the whole session. Switching with `/model` this late would make the new model re-read everything.
-
-The plugin also makes this hold up:
-
-- **While you plan,** Claude is told the plan may be all the executing model sees. So the plan spells out decisions and why, files and lines, steps, and how to verify each one.
-- **If you approve without clearing,** Claude follows the `Executor` line: it does the work itself if it is that model, and hands it to subagents on that model if not.
-- **If entering plan mode re-sends a big conversation to Opus,** you're told what it cost, and that running `/compact` first keeps it small. Claude Code makes this switch itself, so it can't be stopped beforehand.
-
-What a model choice costs:
-
-- **Opus doing the work** costs about twice what Sonnet does per token. You pay that whenever you choose Opus.
-- **The switch itself** is close to free while the chat is small: at the start, right after "Yes, clear context", right after `/compact`, and for every subagent. Later in a session, the new model re-reads everything, unless you hand off with `/execute <model>`.
-
-## When it matters
-
-- **Picking a model when a session starts** is free. There's nothing to re-read yet.
-- **Switching mid-session** is the expensive moment. The plugin catches it for you.
-- **Coming back to an old session** after a break: the cache has expired, so the next message re-reads everything whichever model you use. That makes it the free moment to switch, and the plugin tells you so.
-
-## Switching models mid-session
-
-Type two commands:
-
-1. `/compact`
-2. `/model sonnet` (or whichever model you want)
-
-If you forget and type `/model` first, the guard stops you. It shows what the switch would cost and these same steps.
-
-For most work you don't switch at all. Claude sends pieces of work to other models through subagents on its own:
-
-| Agent | Model | Use |
-|---|---|---|
-| `model-routing:deep-thinker` | Opus | Hard design or debugging question when you're on a smaller model. Ask for it with `/escalate <question>` |
-| `model-routing:implementer` | Sonnet, or whichever model you pick | A settled plan, or the rest of one, carried out chunk by chunk. Run with `/execute [model]` |
-| `model-routing:recall` | Haiku | Pull a specific detail out of old handoffs and transcripts, returning only excerpts instead of re-reading them |
-
-Each subagent starts with an empty context, so it never re-reads your conversation, and your main cache stays warm.
-
-To save the state without compacting, for Codex, another session or tomorrow, run `/handoff`. It writes `.handoff/LATEST.md`.
-
-## What runs automatically
-
-| Hook | When | What it does |
-|---|---|---|
-| `PreModelSwitch` | You type `/model` | Big context and warm cache: asks first, with the cost and the cheaper steps. Cheap switches go through without Claude Code's usual confirmation |
-| `PostModelSwitch` | Claude Code switches by itself (plan mode, fallback) | If it was expensive, says so and how to avoid it next time |
-| `UserPromptSubmit` | Each message, in plan mode only | Tells Claude to write the plan so it stands alone |
-| `PostToolUse` (ExitPlanMode) | Plan approved without clearing | Tells Claude how to execute on a cheaper model |
-| `PreCompact` | Any compaction | Makes the summary cover what a new model needs: decisions and why, files, exact commands and errors, next steps |
-| `PostCompact` | Any compaction | Tells the guard the context is small now. After a manual `/compact`, also saves the summary to `.handoff/LATEST.md` |
-| `SessionStart` | Start, `/clear`, resume, after compaction | Adds a short routing note, loads a handoff written in the last 10 minutes after `/clear`, and gives the resume tip |
-
-Handoffs are kept out of git through `.git/info/exclude`, so your `.gitignore` is never touched. Three helpers sit on PATH while the plugin is on: `handoff-finalize`, `routing-setup`, and `transcript-grep "<regex>" [--tools] [--all]`, which searches past transcripts and prints short excerpts.
+You can turn the routine lines off and keep the problem lines: set `ROUTING_QUIET=1` (see Settings).
 
 ## Install
 
-You need Claude Code 2.1.251 or later (for the model-switch hooks) and `python3` on PATH.
+You need Claude Code 2.1.332 or later and Python 3. On Windows you also need Git Bash: without it the hooks don't run, and `/model-routing:status`, `setup`, `execute` and `escalate` stop with a shell error.
 
 1. Add the marketplace:
 
-```bash
-claude plugin marketplace add Starteli/claude-model-routing
-```
+   ```bash
+   claude plugin marketplace add Starteli/claude-model-routing
+   ```
 
 2. Install the plugin:
 
-```bash
-claude plugin install model-routing@claude-routing
-```
+   ```bash
+   claude plugin install model-routing@claude-routing
+   ```
 
-3. In Claude Code, run `/model-routing:setup` once.
+3. Restart Claude Code. You should see the startup line.
+4. Run `/model-routing:setup` once. It lists settings that get in the way and fixes only the ones you pick.
 
-To get updates later (then restart Claude Code):
+**Update later:**
 
-```bash
-claude plugin update model-routing@claude-routing
-```
+1. Run:
 
-To install from a local folder instead, give step 1 the folder's real path, for example `claude plugin marketplace add ~/Downloads/claude-model-routing`.
+   ```bash
+   claude plugin update model-routing@claude-routing
+   ```
 
-It adds roughly 800 tokens per session: about 570 for the skill and agent descriptions, plus about 200 for the routing note.
+2. Restart Claude Code.
 
-## Tuning
+**Cloud sessions (claude.ai/code):** plugins from your own settings don't load there. Add it at claude.ai/customize/plugins.
 
-Set these in the `env` block of `~/.claude/settings.json`:
+## Everyday commands
 
-| Variable | Default | Meaning |
+| Command | What it does |
+|---|---|
+| `/model-routing:status` | Shows the routing state and any problems. |
+| `/model-routing:escalate <question>` | Gets a stronger answer to one hard question without switching your model. |
+| `/model-routing:execute [opus\|sonnet\|haiku]` | Hands the agreed plan to fresh subagents, so no model re-reads the chat. |
+| `/model-routing:handoff` | Saves the work to `.handoff/LATEST.md`. Then run `/clear`: it loads by itself. |
+| `/model-routing:setup` | Run once. Finds and fixes settings that block the mix or routing. |
+
+## If your account has a model mix
+
+A model mix is a row in `/model`: one lead model plus a cheaper model for subagents.
+
+1. **Don't set `CLAUDE_CODE_SUBAGENT_MODEL` or `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` yourself.** Either one blocks the mix. `/model-routing:setup` finds them in settings files; for a shell export, remove it from your shell profile.
+2. **Any `/model` choice other than the mix row turns the mix off.** To turn it back on, pick the mix row.
+3. **`/config` and Alt+P can leave it half-on** (new main model, old subagent model). The plugin tells you once.
+4. **While the mix is on, all subagents use its subagent model.** Only effort still changes per task. `/model-routing:escalate` then runs the hard question on your main model at high effort.
+5. **Never start with `claude --agent model-routing:…`.** That turns the mix off.
+
+## Without a model mix
+
+Claude sends work to three helper agents on their own models:
+
+| Agent | Model | Used for |
 |---|---|---|
-| `ROUTING_ASK_TOKENS` | `40000` | Ask before a switch that re-sends at least this many tokens |
-| `ROUTING_ASK_USD` | `0.10` | ...and whose estimated re-cache cost is at least this much |
-| `ROUTING_FAST_SWITCH` | `1` | `0` keeps Claude Code's own confirmation on cheap switches |
-| `ROUTING_POLICY` | `1` | `0` drops the routing note |
-| `ROUTING_EXECUTE` | `1` | `0` drops the plan-mode and plan-approved notes |
-| `ROUTING_COMPACT_FORMAT` | `1` | `0` leaves compaction summaries as Claude Code writes them |
-| `ROUTING_SAVE_COMPACT` | `1` | `0` stops saving `/compact` summaries to `.handoff/` |
-| `ROUTING_HANDOFF_DIR` | `.handoff` | Where handoffs live, relative to the project |
-| `ROUTING_HANDOFF_LOAD_MIN` | `10` | After `/clear`, load the full handoff only if it's younger than this. Older handoffs (up to 24h) get a one-line pointer instead |
+| `model-routing:recall` | Haiku | Finding a detail from past sessions |
+| `model-routing:implementer` | Sonnet | Carrying out a settled plan |
+| `model-routing:deep-thinker` | Opus | Hard design or debugging questions |
 
-To put an agent on a different model, edit its `model:` line. For example, set `deep-thinker` to `fable` for the hardest questions.
+Each one starts with an empty context, so it never re-reads your chat. To use another model for one job, run `/model-routing:execute <opus|sonnet|haiku>`. Editing the plugin's agent files is undone by updates.
 
-## Things that quietly cost a full re-read
+## Switching the whole chat to another model
 
-- **`/branch` and `/fork`.** They copy the whole conversation, so a cheaper model still re-reads all of it. A subagent, or "Yes, clear context", starts from just the plan.
-- **A `model:` field on a normal skill or slash command.** It switches the main session for one turn, which means one uncached re-read going in and another coming back. Use `context: fork` together with `model:`, or a subagent.
-- **Entering plan mode under `opusplan` late in a session.** Run `/compact` first.
-- **Changing effort mid-session** on older models.
-- **Switching back and forth.** Each model keeps its own cache for one TTL, so a quick round trip partly survives. A long detour doesn't.
+1. Run `/compact`.
+2. Run `/model <name>`. If a model mix is on, pick the mix row instead: any other choice turns the mix off.
+
+If you type `/model` first late in a long chat, the plugin asks before the switch and shows the cost.
+
+## Plans
+
+1. Shift+Tab enters plan mode. Claude writes the plan so it stands alone.
+2. Without a model mix, the plan starts with `Executor: sonnet`. Change that line before you approve it to run the plan on another model.
+3. Pick **Yes, clear context** when you approve, so the plan runs in a fresh chat. `/model-routing:setup` turns that option on.
+
+## Settings
+
+Put these in the `env` block of your settings file.
+
+| Variable | Default | Effect |
+|---|---|---|
+| `ROUTING_QUIET` | `0` | `1` hides the startup and `Routed:` lines. Problem lines still show. |
+| `ROUTING_RECEIPTS` | `1` | `0` hides the `Routed:` line. |
+| `ROUTING_MIX_GUARD` | `0` | `1` asks before any `/model` switch that would leave the mix. Claude Code can only ask inside `/model`, so with `1` a change through `/config`, Alt+P or fast mode that would leave the mix is blocked: use `/model` for it. |
+| `ROUTING_MIX_CACHE` | `1` | `0` stops reading the cached mix recipe in `~/.claude.json`. |
+| `ROUTING_POLICY` | `1` | `0` stops the short routing note to Claude. |
+| `ROUTING_EXECUTE` | `1` | `0` stops the plan-mode notes. |
+| `ROUTING_ASK_TOKENS` | `40000` | Ask before a switch that re-sends at least this many tokens. |
+| `ROUTING_ASK_USD` | `0.10` | ...and costs at least this much. |
+| `ROUTING_FAST_SWITCH` | `1` | `0` keeps Claude Code's own confirmation on cheap switches. |
+| `ROUTING_HANDOFF_DIR` | `.handoff` | Where handoffs live. |
+| `ROUTING_HANDOFF_LOAD_MIN` | `10` | After `/clear`, load the handoff only if it's younger than this (minutes). |
+| `ROUTING_SAVE_COMPACT` | `1` | `0` stops saving `/compact` summaries as handoffs. |
+| `ROUTING_COMPACT_FORMAT` | `1` | `0` leaves compaction summaries as Claude Code writes them. |
+
+The plugin never sets `CLAUDE_CODE_SUBAGENT_*` or `CLAUDE_CODE_EFFORT_LEVEL`, and never pins a model.
+
+## Upgrading from v1
+
+1. Run `/model-routing:setup`. If v1 pinned `"model": "opusplan"`, it offers to remove it.
+2. The `routing-setup` helper is gone. Use `/model-routing:setup`.
+
+## Optional: the advisor tool
+
+Not used by this plugin. Claude Code's experimental advisor tool (`/advisor <model>`) lets cheaper workers ask a stronger model for advice. It isn't available on Bedrock, Agent Platform or Foundry.
+
+## What it costs
+
+About 210 tokens on every request (agent and skill descriptions), plus about 100 tokens for the routing note at the start and after `/clear` or a routing change.
